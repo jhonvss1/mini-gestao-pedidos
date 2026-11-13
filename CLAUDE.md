@@ -50,6 +50,7 @@ docker compose up --build                           # a partir do E17
 
 - Integração **sempre contra SQL Server real** (Testcontainers); nunca in-memory nem SQLite.
 - Todo teste de critério de aceite leva `[Trait("CA", "CA-xx")]`.
+- Nomes de métodos de teste em PascalCase, semânticos e objetivos, sem underscore (`RejeitaQuantidadeNaoPositiva`).
 - Unitários: NSubstitute só nas duas portas de Application; `FakeTimeProvider` para datas.
 - Frontend: sem testes automatizados; roteiro manual no README.
 
@@ -57,7 +58,7 @@ docker compose up --build                           # a partir do E17
 
 - Commits pequenos e semânticos, em português (skill `commit-semantico`), um por etapa do plano.
 - **Sem `Co-Authored-By`** nem outra linha de coautoria nas mensagens.
-- Commitar apenas quando o usuário pedir. Nunca reescrever histórico; correções entram como novos commits.
+- Commitar sem pedir permissão, sempre com poucas alterações por commit. Nunca reescrever histórico; correções entram como novos commits.
 
 ## Segurança
 
