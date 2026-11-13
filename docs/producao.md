@@ -28,7 +28,7 @@ Internet ──► Cloudflare (HTTPS, Access) ──► túnel ──► [ EC2 ]
 | Item | Escolha | Motivo |
 |---|---|---|
 | AMI | Ubuntu Server 24.04 LTS | Suporte longo; o agente do SSM já vem instalado |
-| Tipo | `t3.medium` (2 vCPU, 4 GB) | O SQL Server em container pede pelo menos 2 GB livres; `t3.small` fica no limite |
+| Tipo | `t3.medium` (2 vCPU, 4 GB) ou, em conta no Plano Gratuito, `c7i-flex.large` (2 vCPU, 4 GB) | O SQL Server em container pede pelo menos 2 GB livres; `t3.small` fica no limite. A imagem do SQL Server é só x86: **não use tipos ARM** (com "g" no nome, como `t4g`) |
 | Disco | EBS `gp3`, 30 GB, **criptografado** | Sistema, imagens Docker e volume do banco |
 | Rede | IP público automático | Só para a **saída** (baixar pacotes e imagens, falar com a Cloudflare). Sem NAT, que custa mais |
 | Grupo de segurança | **Nenhuma regra de entrada** | O acesso é pelo túnel e pelo SSM, não por porta aberta |
