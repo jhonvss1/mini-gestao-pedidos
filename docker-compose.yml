@@ -1,0 +1,42 @@
+name: gestao-pedidos
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!}
+    ports:
+      - "${DB_PORT:-1433}:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # Serviço de uma execução: cria o banco, o schema e a carga inicial (scripts idempotentes).
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!}
+    volumes:
+      - ./database:/scripts:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        sql() { /opt/mssql-tools18/bin/sqlcmd -C -b -I -f 65001 -S db -U sa -P "$$MSSQL_SA_PASSWORD" "$$@"; }
+        sql -d master -i /scripts/00-create-database.sql
+        sql -d gestao_pedidos -i /scripts/01-schema.sql
+        sql -d gestao_pedidos -i /scripts/02-seed.sql
+        echo "Banco gestao_pedidos pronto."
+
+volumes:
+  mssql-data:
