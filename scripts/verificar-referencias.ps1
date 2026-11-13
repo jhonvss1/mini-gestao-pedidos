@@ -22,9 +22,10 @@ foreach ($projeto in $permitidas.Keys) {
     }
 
     [xml]$xml = Get-Content $arquivo
+    # Os .csproj usam barra invertida ("..\Projeto\Projeto.csproj"); no Linux ela não é separador de pasta, então é normalizada.
     $referencias = @($xml.Project.ItemGroup.ProjectReference |
         Where-Object { $_ } |
-        ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_.Include) })
+        ForEach-Object { [IO.Path]::GetFileNameWithoutExtension(($_.Include -replace '\\', '/')) })
 
     $esperadas = $permitidas[$projeto]
 
