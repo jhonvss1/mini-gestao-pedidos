@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pedidos.Application;
+using Pedidos.Application.CasosDeUso;
+using Pedidos.Application.Modelos;
 
 namespace Pedidos.Api.Controllers;
 

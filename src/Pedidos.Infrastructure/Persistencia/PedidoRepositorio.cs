@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Pedidos.Application;
+using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;

@@ -2,6 +2,7 @@ using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 
 namespace Pedidos.Domain.Resultados;
+
 /// <summary>Desfecho de <see cref="Pedido.Criar"/>: tipo fechado, sem exceções para fluxo de negócio.</summary>
 public abstract record ResultadoCriacaoPedido
 {

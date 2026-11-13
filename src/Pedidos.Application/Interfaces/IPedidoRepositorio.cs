@@ -2,7 +2,7 @@ using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
 
-namespace Pedidos.Application;
+namespace Pedidos.Application.Interfaces;
 
 /// <summary>
 /// Porta de escrita implementada pela Infrastructure. Existe para a Application não enxergar o EF Core e para

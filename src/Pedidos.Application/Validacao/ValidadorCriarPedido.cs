@@ -1,12 +1,8 @@
+using Pedidos.Application.Comandos;
+using Pedidos.Application.Comum;
 using Pedidos.Domain.ObjetosDeValor;
 
-namespace Pedidos.Application;
-
-/// <summary>Resultado da etapa 1: todos os erros da etapa e, se não houver, os itens já consolidados (RN-09).</summary>
-public sealed record ResultadoValidacao(IReadOnlyList<Erro> Erros, IReadOnlyList<ItemSolicitado> Itens)
-{
-    public bool Valido => Erros.Count == 0;
-}
+namespace Pedidos.Application.Validacao;
 
 /// <summary>Etapa 1 da RN-11 (estrutura e campos): agrega todos os erros da etapa, sem consultar o banco.</summary>
 public static class ValidadorCriarPedido

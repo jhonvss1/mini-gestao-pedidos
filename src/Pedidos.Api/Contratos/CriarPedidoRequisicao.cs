@@ -1,4 +1,4 @@
-using Pedidos.Application;
+using Pedidos.Application.Comandos;
 
 namespace Pedidos.Api.Contratos;
 

@@ -1,4 +1,7 @@
-namespace Pedidos.Application;
+using Pedidos.Application.Consultas;
+using Pedidos.Application.Modelos;
+
+namespace Pedidos.Application.Interfaces;
 
 /// <summary>
 /// Porta de leitura implementada pela Infrastructure. Devolve read models, não agregados. Não é CQRS formal:

@@ -1,9 +1,9 @@
-namespace Pedidos.Application;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Consultas;
+using Pedidos.Application.Interfaces;
+using Pedidos.Application.Modelos;
 
-/// <summary>Período obrigatório do ranking (RN-22). Ausente é erro: ambos os campos são anuláveis só para reportá-lo.</summary>
-public sealed record ObterTopClientesConsulta(DateOnly? DataInicio, DateOnly? DataFim);
-
-public sealed record ClienteRanking(int ClienteId, string Nome, decimal ValorTotal);
+namespace Pedidos.Application.CasosDeUso;
 
 public sealed class ObterTopClientes(IPedidoConsultas consultas)
 {

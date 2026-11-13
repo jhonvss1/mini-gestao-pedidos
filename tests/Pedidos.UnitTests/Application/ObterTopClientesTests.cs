@@ -1,5 +1,9 @@
 using NSubstitute;
-using Pedidos.Application;
+using Pedidos.Application.CasosDeUso;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Consultas;
+using Pedidos.Application.Interfaces;
+using Pedidos.Application.Modelos;
 
 namespace Pedidos.UnitTests.Application;
 

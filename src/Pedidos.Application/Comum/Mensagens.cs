@@ -1,4 +1,4 @@
-namespace Pedidos.Application;
+namespace Pedidos.Application.Comum;
 
 /// <summary>Mensagens de erro em português, centralizadas. Identificam o campo ou item e a causa (RN-11).</summary>
 internal static class Mensagens

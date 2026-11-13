@@ -1,4 +1,5 @@
 namespace Pedidos.Domain.Entidades;
+
 public class Produto
 {
     public Produto(int id, string nome, decimal preco, int estoque)

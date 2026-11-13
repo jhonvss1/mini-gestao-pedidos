@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Pedidos.Application;
+using Pedidos.Application.Consultas;
+using Pedidos.Application.Interfaces;
+using Pedidos.Application.Modelos;
 using Pedidos.Domain.Entidades;
 
 namespace Pedidos.Infrastructure.Persistencia;

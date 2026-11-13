@@ -1,4 +1,4 @@
-namespace Pedidos.Application;
+namespace Pedidos.Application.Comum;
 
 /// <summary>Códigos estáveis de erro (spec 4.1), expostos no campo <c>codigo</c> do Problem Details.</summary>
 public static class CodigosErro

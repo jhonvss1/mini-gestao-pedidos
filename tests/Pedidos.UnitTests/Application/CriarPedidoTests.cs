@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
-using Pedidos.Application;
+using Pedidos.Application.CasosDeUso;
+using Pedidos.Application.Comandos;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Constantes;
 using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;

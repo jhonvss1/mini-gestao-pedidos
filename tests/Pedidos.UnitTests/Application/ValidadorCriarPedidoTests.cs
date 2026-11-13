@@ -1,4 +1,6 @@
-using Pedidos.Application;
+using Pedidos.Application.Comandos;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Validacao;
 using Pedidos.Domain.ObjetosDeValor;
 
 namespace Pedidos.UnitTests.Application;

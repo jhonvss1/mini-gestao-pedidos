@@ -1,40 +1,9 @@
-namespace Pedidos.Application;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Consultas;
+using Pedidos.Application.Interfaces;
+using Pedidos.Application.Modelos;
 
-/// <summary>Parâmetros já tipados da listagem. Ausente = filtro não aplicado (pagina e tamanho têm padrão).</summary>
-public sealed record ListarPedidosConsulta(
-    int? ClienteId,
-    DateOnly? DataInicio,
-    DateOnly? DataFim,
-    int? Pagina,
-    int? TamanhoPagina);
-
-/// <summary>Filtro para a porta: intervalo de <c>DataCriacao</c> em UTC, início inclusivo e fim exclusivo.</summary>
-public sealed record FiltroPedidos(int? ClienteId, DateTime? Inicio, DateTime? FimExclusivo, int Pagina, int TamanhoPagina);
-
-public sealed record ItemPedidoListado(
-    int ProdutoId,
-    string ProdutoNome,
-    int Quantidade,
-    decimal PrecoUnitario,
-    decimal Subtotal);
-
-public sealed record PedidoListado(
-    int Id,
-    int ClienteId,
-    string ClienteNome,
-    DateTime DataCriacao,
-    decimal ValorTotal,
-    IReadOnlyList<ItemPedidoListado> Itens);
-
-/// <summary>Resultado bruto da porta: a página pedida e o total após os filtros.</summary>
-public sealed record PedidosEncontrados(IReadOnlyList<PedidoListado> Registros, int TotalItens);
-
-public sealed record PaginaDePedidos(
-    IReadOnlyList<PedidoListado> Registros,
-    int Pagina,
-    int TamanhoPagina,
-    int TotalItens,
-    int TotalPaginas);
+namespace Pedidos.Application.CasosDeUso;
 
 public sealed class ListarPedidos(IPedidoConsultas consultas)
 {

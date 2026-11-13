@@ -1,5 +1,5 @@
 using System.Globalization;
-using Pedidos.Application;
+using Pedidos.Application.Comum;
 
 namespace Pedidos.Api.Contratos;
 

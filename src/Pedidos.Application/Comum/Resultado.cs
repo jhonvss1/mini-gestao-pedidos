@@ -1,23 +1,4 @@
-namespace Pedidos.Application;
-
-public enum TipoResultado
-{
-    Sucesso,
-    RequisicaoInvalida,
-    Validacao,
-    NaoEncontrado,
-    Conflito,
-}
-
-/// <summary>
-/// Erro de negócio acumulável. <see cref="Dados"/> carrega os valores estruturados do erro
-/// (ex.: produtoId, solicitado, disponivel) para a Api montar o contrato HTTP.
-/// </summary>
-public sealed record Erro(
-    string Codigo,
-    string Mensagem,
-    string? Campo = null,
-    IReadOnlyDictionary<string, object>? Dados = null);
+namespace Pedidos.Application.Comum;
 
 /// <summary>Resultado único dos casos de uso: tipo + lista de erros (RN-11), sem biblioteca de notificação.</summary>
 public class Resultado

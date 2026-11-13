@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Pedidos.Application;
+using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Entidades;
 using Pedidos.Infrastructure.Persistencia;
 using Pedidos.IntegrationTests.Infra;

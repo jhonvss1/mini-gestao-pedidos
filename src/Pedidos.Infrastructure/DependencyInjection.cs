@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Pedidos.Application;
+using Pedidos.Application.Interfaces;
 using Pedidos.Infrastructure.Persistencia;
 
 namespace Pedidos.Infrastructure;

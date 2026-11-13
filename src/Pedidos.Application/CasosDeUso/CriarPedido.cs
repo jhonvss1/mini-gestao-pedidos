@@ -1,8 +1,11 @@
+using Pedidos.Application.Comandos;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Interfaces;
+using Pedidos.Application.Validacao;
 using Pedidos.Domain.Entidades;
 using Pedidos.Domain.Resultados;
 
-namespace Pedidos.Application;
-
+namespace Pedidos.Application.CasosDeUso;
 
 public sealed class CriarPedido(IPedidoRepositorio repositorio, TimeProvider relogio)
 {

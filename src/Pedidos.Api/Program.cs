@@ -1,5 +1,5 @@
 using Pedidos.Api.Erros;
-using Pedidos.Application;
+using Pedidos.Application.CasosDeUso;
 using Pedidos.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);

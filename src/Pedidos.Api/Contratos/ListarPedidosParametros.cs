@@ -1,4 +1,5 @@
-using Pedidos.Application;
+using Pedidos.Application.Comum;
+using Pedidos.Application.Consultas;
 using static Pedidos.Api.Contratos.ConversoresDeConsulta;
 
 namespace Pedidos.Api.Contratos;

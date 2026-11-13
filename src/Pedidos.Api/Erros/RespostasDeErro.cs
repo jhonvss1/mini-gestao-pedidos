@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Pedidos.Application;
+using Pedidos.Application.Comum;
 
 namespace Pedidos.Api.Erros;
 

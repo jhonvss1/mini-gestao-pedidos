@@ -1,4 +1,4 @@
-namespace Pedidos.Application;
+namespace Pedidos.Application.Comum;
 
 /// <summary>Traduz datas inclusivas <c>yyyy-MM-dd</c> para o intervalo de <c>DataCriacao</c> em UTC (RN-13).</summary>
 internal static class PeriodoDeDatas

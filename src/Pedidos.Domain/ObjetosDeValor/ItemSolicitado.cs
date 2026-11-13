@@ -2,6 +2,7 @@ using Pedidos.Domain.Constantes;
 using Pedidos.Domain.Resultados;
 
 namespace Pedidos.Domain.ObjetosDeValor;
+
 /// <summary>Produto e quantidade pedidos, ainda sem preço (o preço vem do cadastro, RN-04).</summary>
 public sealed record ItemSolicitado
 {
