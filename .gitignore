@@ -15,6 +15,7 @@ dist/
 
 # Segredos e configuração local
 .env
+.env.producao
 .claude/settings.local.json
 
 # Dados locais

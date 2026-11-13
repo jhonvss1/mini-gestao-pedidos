@@ -1,0 +1,62 @@
+# Camada de PRODUÇÃO sobre o docker-compose.yml. Uso (no servidor):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d --build
+#
+# Diferenças em relação ao desenvolvimento:
+#   * nenhuma porta é publicada no host: só o cloudflared (túnel) chega ao nginx, pela rede do Compose;
+#   * senhas obrigatórias, sem valor padrão (o Compose recusa subir sem elas);
+#   * a API usa o login restrito app_pedidos, não o sa;
+#   * sem carga de demonstração (CARGA_INICIAL=false);
+#   * SQL Server na edição Express (a Developer, padrão da imagem, não é licenciada para produção);
+#   * reinício automático e logs com rotação (não enchem o disco).
+#
+# NUNCA rode "docker compose down -v" nem scripts/verificar-compose.ps1 em produção: ambos apagam o volume do banco.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Defina MSSQL_SA_PASSWORD no .env.producao}
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-1536}
+    logging: *logging
+
+  db-init:
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Defina MSSQL_SA_PASSWORD no .env.producao}
+      CARGA_INICIAL: "false"
+      SENHA_APP: ${SENHA_APP:?Defina SENHA_APP no .env.producao}
+    logging: *logging
+
+  api:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      ConnectionStrings__Pedidos: "Server=db,1433;Database=gestao_pedidos;User Id=app_pedidos;Password=${SENHA_APP:?Defina SENHA_APP no .env.producao};TrustServerCertificate=True"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    logging: *logging
+
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+    logging: *logging
+
+  # Túnel da Cloudflare: publica o nginx sem abrir nenhuma porta de entrada no servidor.
+  # No painel Zero Trust, o "Public hostname" do túnel deve apontar o serviço para http://frontend:80.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.11.0
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Defina TUNNEL_TOKEN no .env.producao}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    logging: *logging
