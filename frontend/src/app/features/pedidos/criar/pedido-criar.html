@@ -1,0 +1,95 @@
+<section class="criar">
+  <h1>Novo pedido</h1>
+
+  <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+    <div class="campo">
+      <label for="cliente">Cliente</label>
+      <select id="cliente" formControlName="clienteId">
+        <option [ngValue]="null">Selecione…</option>
+        @for (opcao of opcoesClientes(); track opcao.id) {
+          <option [ngValue]="opcao.id">{{ opcao.rotulo }}</option>
+        }
+      </select>
+      @if (invalido(form.controls.clienteId)) {
+        <p class="erro">Selecione um cliente.</p>
+      }
+      @for (mensagem of erros.porCampo('clienteId'); track mensagem) {
+        <p class="erro">{{ mensagem }}</p>
+      }
+    </div>
+
+    <fieldset class="itens" formArrayName="itens">
+      <legend>Itens</legend>
+
+      @for (linha of itens.controls; track linha; let i = $index) {
+        <div class="linha" [formGroupName]="i">
+          <div class="campo produto">
+            <label [for]="'produto-' + i">Produto</label>
+            <select [id]="'produto-' + i" formControlName="produtoId">
+              <option [ngValue]="null">Selecione…</option>
+              @for (opcao of opcoesProdutos(); track opcao.id) {
+                <option [ngValue]="opcao.id">{{ opcao.rotulo }}</option>
+              }
+            </select>
+            @if (invalido(linha.controls.produtoId)) {
+              <p class="erro">Selecione um produto.</p>
+            }
+            @for (mensagem of erros.porCampo('itens[' + i + '].produtoId'); track mensagem) {
+              <p class="erro">{{ mensagem }}</p>
+            }
+          </div>
+
+          <div class="campo quantidade">
+            <label [for]="'quantidade-' + i">Quantidade</label>
+            <input
+              [id]="'quantidade-' + i"
+              type="number"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              formControlName="quantidade"
+            />
+            @if (invalido(linha.controls.quantidade)) {
+              <p class="erro">A quantidade deve ser um inteiro maior que zero.</p>
+            }
+            @for (mensagem of erros.porCampo('itens[' + i + '].quantidade'); track mensagem) {
+              <p class="erro">{{ mensagem }}</p>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="remover"
+            (click)="removerLinha(i)"
+            [disabled]="itens.length === 1"
+            [attr.aria-label]="'Remover item ' + (i + 1)"
+          >
+            Remover
+          </button>
+        </div>
+      }
+
+      <button type="button" (click)="adicionarLinha()">Adicionar item</button>
+      @for (mensagem of erros.porCampo('itens'); track mensagem) {
+        <p class="erro">{{ mensagem }}</p>
+      }
+      <p class="dica">Linhas repetidas do mesmo produto são somadas pelo servidor.</p>
+    </fieldset>
+
+    <p class="total">
+      Total estimado: <strong>{{ totalEstimado() | moeda }}</strong>
+      <span class="suave">
+        Estimativa pelo preço do cadastro; o valor final é o calculado pelo servidor.
+      </span>
+    </p>
+
+    <app-erros-api [nomeDoProduto]="nomeDoProduto" />
+
+    <div class="acoes">
+      <button type="submit" class="primario" [disabled]="form.invalid || enviando()">
+        {{ enviando() ? 'Enviando…' : 'Criar pedido' }}
+      </button>
+      <a routerLink="/pedidos">Cancelar</a>
+    </div>
+  </form>
+</section>

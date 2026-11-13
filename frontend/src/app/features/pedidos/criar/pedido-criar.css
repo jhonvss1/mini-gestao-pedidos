@@ -1,0 +1,77 @@
+.criar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+  max-width: 48rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+}
+
+.itens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--espaco-3);
+}
+
+.produto {
+  flex: 1 1 18rem;
+}
+
+.quantidade {
+  flex: 0 0 8rem;
+}
+
+.remover {
+  align-self: flex-end;
+}
+
+.erro,
+.dica,
+.total {
+  margin: 0;
+}
+
+.dica,
+.suave {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--espaco-2);
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+}

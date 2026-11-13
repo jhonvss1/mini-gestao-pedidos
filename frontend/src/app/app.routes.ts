@@ -7,5 +7,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/pedidos/lista/pedidos-lista').then((m) => m.PedidosLista),
   },
+  {
+    path: 'pedidos/novo',
+    loadComponent: () => import('./features/pedidos/criar/pedido-criar').then((m) => m.PedidoCriar),
+  },
   { path: '**', redirectTo: 'pedidos' },
 ];

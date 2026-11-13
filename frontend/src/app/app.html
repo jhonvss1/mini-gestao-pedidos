@@ -1,7 +1,10 @@
 <header class="topo">
   <a class="marca" routerLink="/pedidos">Gestão de Pedidos</a>
   <nav aria-label="Principal">
-    <a routerLink="/pedidos" routerLinkActive="ativo">Pedidos</a>
+    <a routerLink="/pedidos" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }"
+      >Pedidos</a
+    >
+    <a routerLink="/pedidos/novo" routerLinkActive="ativo">Novo pedido</a>
   </nav>
 </header>
 
