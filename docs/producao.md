@@ -64,7 +64,7 @@ git clone <URL-do-seu-repositório> gestao-pedidos && cd gestao-pedidos
 No painel **Zero Trust**: *Networks → Tunnels → Create a tunnel → Cloudflared*.
 
 1. Dê um nome ao túnel e, na tela de instalação, escolha **Docker** e **copie apenas o token** (a parte depois de `--token`). O túnel roda como serviço do Compose, então não instale nada além disso.
-2. Em **Public hostname**, adicione `pedidos.seudominio.com` apontando para o serviço **HTTP** `frontend:80` (é o nome do serviço dentro da rede do Compose).
+2. Em **Public hostname** (ou *Published application routes*), adicione `pedidos.seudominio.com` com **Service URL** `http://frontend:80` (`frontend` é o nome do serviço na rede do Compose). Use **`http`**, e não `https`: o HTTPS é o da Cloudflare, na frente; do túnel até o nginx o tráfego é HTTP puro, e com `https://` o resultado é erro 502.
 
 ## 5. Segredos
 
@@ -147,6 +147,16 @@ scripts/restaurar-banco.sh /var/backups/gestao-pedidos/<arquivo>.bak.gz
 ```
 
 Ele cria `gestao_pedidos_verificacao` e mostra a contagem de pedidos. Para restaurar de verdade sobre a produção, informe `gestao_pedidos` como segundo argumento (o script pede que você digite `RESTAURAR`, para a API e o frontend e os religa no fim).
+
+## Problemas comuns na primeira subida
+
+| Sintoma | Causa | Correção |
+|---|---|---|
+| `db` sai logo ao iniciar, log com "requires a machine with at least 2000 megabytes of memory" | A instância saiu com um tipo menor que o escolhido (visto com `t3.micro`, 909 MB) | `free -m` deve mostrar cerca de 3800; senão, interromper a instância e **alterar o tipo** (`c7i-flex.large` ou `t3.medium`) |
+| Build trava e o Session Manager mostra "not connected" | Falta de memória derruba o SSM Agent; sem swap, o build do .NET e do Angular estoura os 4 GB | Reiniciar a instância, criar 4 GB de swap e construir uma imagem por vez (`build api`, `build frontend`, `up -d`) |
+| `cd ~/gestao-pedidos` falha | O Session Manager abre como `ssm-user`; o repositório está na pasta do `ubuntu` | `sudo su - ubuntu` antes de usar o projeto |
+| Erro 502 no domínio, log do `cloudflared` com "tls: first record does not look like a TLS handshake" | A rota do túnel foi salva com `https://frontend:80` | Editar a rota para `http://frontend:80`; o `cloudflared` recebe a mudança sozinho |
+| Colar o token com `read` + `sed` em uma linha só falha | O terminal do navegador corta linhas longas coladas | Fazer em passos curtos (`read`, depois `sed`) ou editar com `nano` |
 
 ## 10. Operação do dia a dia
 
