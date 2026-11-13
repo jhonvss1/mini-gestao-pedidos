@@ -21,6 +21,7 @@ public static class DependencyInjection
             .UseSqlServer(stringConexao)
             .AddInterceptors(provedor.GetServices<IInterceptor>()));
         services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
+        services.AddScoped<IPedidoConsultas, PedidoConsultas>();
 
         return services;
     }
