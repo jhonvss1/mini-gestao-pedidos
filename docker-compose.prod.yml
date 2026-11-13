@@ -31,7 +31,9 @@ services:
   db-init:
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Defina MSSQL_SA_PASSWORD no .env.producao}
-      CARGA_INICIAL: "false"
+      # Padrão false (dados reais). Para uma demonstração pública, defina CARGA_INICIAL=true no .env.producao:
+      # o 02-seed.sql só carrega se a tabela cliente estiver vazia, então nunca sobrescreve dados existentes.
+      CARGA_INICIAL: ${CARGA_INICIAL:-false}
       SENHA_APP: ${SENHA_APP:?Defina SENHA_APP no .env.producao}
     logging: *logging
 
