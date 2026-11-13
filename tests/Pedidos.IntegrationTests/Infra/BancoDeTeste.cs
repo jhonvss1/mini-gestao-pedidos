@@ -1,0 +1,89 @@
+using Microsoft.Data.SqlClient;
+
+namespace Pedidos.IntegrationTests.Infra;
+
+/// <summary>
+/// Banco exclusivo de uma classe de teste, criado a partir dos scripts de database/
+/// (os mesmos usados pelo Compose). Classes diferentes não compartilham dados.
+/// </summary>
+public sealed class BancoDeTeste : IAsyncLifetime
+{
+    private string _stringConexaoServidor = "";
+
+    public string Nome { get; } = $"pedidos_teste_{Guid.NewGuid():N}";
+
+    public string StringConexao =>
+        new SqlConnectionStringBuilder(_stringConexaoServidor) { InitialCatalog = Nome }.ConnectionString;
+
+    public async Task InitializeAsync()
+    {
+        _stringConexaoServidor = await ServidorSqlCompartilhado.ObterStringConexaoAsync();
+        await ExecutarNoServidorAsync($"CREATE DATABASE [{Nome}]");
+        await ExecutarScriptAsync("01-schema.sql");
+    }
+
+    public async Task DisposeAsync()
+    {
+        SqlConnection.ClearAllPools();
+        await ExecutarNoServidorAsync(
+            $"ALTER DATABASE [{Nome}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{Nome}]");
+    }
+
+    /// <summary>Executa um script de database/ no banco de teste (scripts não usam GO).</summary>
+    public async Task ExecutarScriptAsync(string nomeArquivo)
+    {
+        var sql = await File.ReadAllTextAsync(Path.Combine(PastaDatabase(), nomeArquivo));
+        await using var conexao = await AbrirAsync();
+        await using var comando = new SqlCommand(sql, conexao);
+        await comando.ExecuteNonQueryAsync();
+    }
+
+    public async Task<SqlConnection> AbrirAsync()
+    {
+        var conexao = new SqlConnection(StringConexao);
+        await conexao.OpenAsync();
+        return conexao;
+    }
+
+    public async Task<T> EscalarAsync<T>(string sql)
+    {
+        await using var conexao = await AbrirAsync();
+        await using var comando = new SqlCommand(sql, conexao);
+        return (T)Convert.ChangeType((await comando.ExecuteScalarAsync())!, typeof(T));
+    }
+
+    /// <summary>Executa um comando e devolve o erro do SQL Server (null se não falhou).</summary>
+    public async Task<SqlException?> ErroDoComandoAsync(string sql)
+    {
+        try
+        {
+            await using var conexao = await AbrirAsync();
+            await using var comando = new SqlCommand(sql, conexao);
+            await comando.ExecuteNonQueryAsync();
+            return null;
+        }
+        catch (SqlException ex)
+        {
+            return ex;
+        }
+    }
+
+    private async Task ExecutarNoServidorAsync(string sql)
+    {
+        await using var conexao = new SqlConnection(_stringConexaoServidor);
+        await conexao.OpenAsync();
+        await using var comando = new SqlCommand(sql, conexao);
+        await comando.ExecuteNonQueryAsync();
+    }
+
+    private static string PastaDatabase()
+    {
+        var pasta = new DirectoryInfo(AppContext.BaseDirectory);
+        while (pasta is not null && !File.Exists(Path.Combine(pasta.FullName, "Pedidos.slnx")))
+            pasta = pasta.Parent;
+
+        return pasta is null
+            ? throw new DirectoryNotFoundException("Pedidos.slnx não encontrado acima de " + AppContext.BaseDirectory)
+            : Path.Combine(pasta.FullName, "database");
+    }
+}
