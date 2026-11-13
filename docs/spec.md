@@ -121,7 +121,7 @@ Restrições: UNIQUE (`PedidoId`, `ProdutoId`) (reflete RN-09). Subtotal não é
 Nomenclatura: o enunciado do teste usa `DataPedido`; esta especificação adota `DataCriacao` **[D-17]**. O README deve registrar essa correspondência ao apresentar a query corrigida.
 
 ### 3.3 Scripts SQL
-- Em `db/` (ou caminho definido no plano): `01-schema.sql` (tabelas, FKs, CHECKs, índices) e `02-seed.sql` (carga inicial).
+- Em `database/`: `01-schema.sql` (tabelas, FKs, CHECKs, índices) e `02-seed.sql` (carga inicial).
 - Os scripts são a fonte do schema; o mapeamento EF Core deve ser compatível com eles. Reexecução não deve duplicar dados nem falhar (idempotentes).
 - **Carga inicial mínima verificável:**
   - ≥ 7 clientes, incluindo **dois clientes distintos com o mesmo nome**.
