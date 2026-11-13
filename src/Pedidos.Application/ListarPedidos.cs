@@ -61,8 +61,8 @@ public sealed class ListarPedidos(IPedidoConsultas consultas)
 
         var filtro = new FiltroPedidos(
             consulta.ClienteId,
-            Inicio: consulta.DataInicio?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-            FimExclusivo: ProximoDia(consulta.DataFim),
+            Inicio: PeriodoDeDatas.Inicio(consulta.DataInicio),
+            FimExclusivo: PeriodoDeDatas.FimExclusivo(consulta.DataFim),
             pagina,
             tamanho);
 
@@ -72,13 +72,6 @@ public sealed class ListarPedidos(IPedidoConsultas consultas)
         return Resultado<PaginaDePedidos>.Ok(
             new PaginaDePedidos(encontrados.Registros, pagina, tamanho, encontrados.TotalItens, totalPaginas));
     }
-
-    // dataFim é inclusiva (RN-13): DataCriacao < (dataFim + 1 dia) 00:00Z. Em DateOnly.MaxValue não há dia seguinte,
-    // então o intervalo fica aberto no fim.
-    private static DateTime? ProximoDia(DateOnly? dataFim) =>
-        dataFim is null || dataFim == DateOnly.MaxValue
-            ? null
-            : dataFim.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
     private static Erro Invalido(string campo, string mensagem) => new(CodigosErro.RequisicaoInvalida, mensagem, campo);
 }

@@ -13,6 +13,8 @@ internal static class Mensagens
     public const string PaginaInvalida = "A página deve ser um inteiro maior ou igual a 1.";
     public const string IntervaloInvalido = "A dataInicio não pode ser posterior à dataFim.";
 
+    public static string ParametroObrigatorio(string campo) => $"O parâmetro {campo} é obrigatório.";
+
     public static string TamanhoPaginaInvalido(int maximo) =>
         $"O tamanhoPagina deve ser um inteiro entre 1 e {maximo}.";
 

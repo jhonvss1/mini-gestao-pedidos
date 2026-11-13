@@ -7,6 +7,34 @@ namespace Pedidos.Infrastructure.Persistencia;
 /// <summary>Consultas de leitura (sem rastreamento), projetadas direto para os read models de Application.</summary>
 public sealed class PedidoConsultas(PedidosDbContext contexto) : IPedidoConsultas
 {
+    public async Task<IReadOnlyList<ClienteRanking>> ObterTopClientesAsync(
+        DateTime inicio,
+        DateTime? fimExclusivo,
+        int limite,
+        CancellationToken cancellationToken)
+    {
+        var pedidos = contexto.Pedidos.AsNoTracking().Where(p => p.DataCriacao >= inicio);
+        if (fimExclusivo is { } fim)
+            pedidos = pedidos.Where(p => p.DataCriacao < fim);
+
+        // Agrega primeiro por id do cliente (nunca por nome, RN-19) e só depois busca o nome dos poucos selecionados.
+        var topo = await pedidos
+            .GroupBy(p => p.ClienteId)
+            .Select(g => new { ClienteId = g.Key, ValorTotal = g.Sum(p => p.ValorTotal) })
+            .OrderByDescending(x => x.ValorTotal)
+            .ThenBy(x => x.ClienteId)
+            .Take(limite)
+            .ToListAsync(cancellationToken);
+
+        var ids = topo.Select(x => x.ClienteId).ToList();
+        var nomes = await contexto.Clientes
+            .AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Nome, cancellationToken);
+
+        return [.. topo.Select(x => new ClienteRanking(x.ClienteId, nomes[x.ClienteId], x.ValorTotal))];
+    }
+
     public async Task<PedidosEncontrados> ListarAsync(FiltroPedidos filtro, CancellationToken cancellationToken)
     {
         var pedidos = contexto.Pedidos.AsNoTracking();
