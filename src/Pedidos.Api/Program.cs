@@ -19,6 +19,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<CriarPedido>();
 builder.Services.AddScoped<ListarPedidos>();
 builder.Services.AddScoped<ObterTopClientes>();
+builder.Services.AddScoped<ListarCatalogo>();
 builder.Services.AddInfraestrutura(stringConexao);
 
 var app = builder.Build();
