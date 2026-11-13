@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
-using Pedidos.Infrastructure.Persistencia;
+using Pedidos.Infrastructure.Persistencia.Contexto;
+using Pedidos.Infrastructure.Persistencia.Repositorios;
 using Pedidos.IntegrationTests.Infra;
 
 namespace Pedidos.IntegrationTests.Persistencia;

@@ -3,8 +3,9 @@ using Pedidos.Application.Consultas;
 using Pedidos.Application.Interfaces;
 using Pedidos.Application.Modelos;
 using Pedidos.Domain.Entidades;
+using Pedidos.Infrastructure.Persistencia.Contexto;
 
-namespace Pedidos.Infrastructure.Persistencia;
+namespace Pedidos.Infrastructure.Persistencia.Consultas;
 
 /// <summary>Consultas de leitura (sem rastreamento), projetadas direto para os read models de Application.</summary>
 public sealed class PedidoConsultas(PedidosDbContext contexto) : IPedidoConsultas

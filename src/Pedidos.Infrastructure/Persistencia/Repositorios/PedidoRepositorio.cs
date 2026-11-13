@@ -4,8 +4,9 @@ using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
+using Pedidos.Infrastructure.Persistencia.Contexto;
 
-namespace Pedidos.Infrastructure.Persistencia;
+namespace Pedidos.Infrastructure.Persistencia.Repositorios;
 
 /// <summary>
 /// Cria o pedido em uma única transação. A regra de estoque é decidida pelo domínio sobre um snapshot; a garantia

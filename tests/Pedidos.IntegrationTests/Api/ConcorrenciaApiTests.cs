@@ -4,7 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Entidades;
-using Pedidos.Infrastructure.Persistencia;
+using Pedidos.Infrastructure.Persistencia.Contexto;
+using Pedidos.Infrastructure.Persistencia.Repositorios;
 using Pedidos.IntegrationTests.Infra;
 
 namespace Pedidos.IntegrationTests.Api;

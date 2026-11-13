@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Pedidos.Infrastructure.Persistencia;
+using Pedidos.Infrastructure.Persistencia.Contexto;
 using Pedidos.IntegrationTests.Infra;
 
 namespace Pedidos.IntegrationTests.Banco;

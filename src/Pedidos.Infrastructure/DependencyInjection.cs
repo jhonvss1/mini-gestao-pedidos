@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Pedidos.Application.Interfaces;
-using Pedidos.Infrastructure.Persistencia;
+using Pedidos.Infrastructure.Persistencia.Consultas;
+using Pedidos.Infrastructure.Persistencia.Contexto;
+using Pedidos.Infrastructure.Persistencia.Repositorios;
 
 namespace Pedidos.Infrastructure;
 
