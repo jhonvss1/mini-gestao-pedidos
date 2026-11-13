@@ -148,6 +148,20 @@ scripts/restaurar-banco.sh /var/backups/gestao-pedidos/<arquivo>.bak.gz
 
 Ele cria `gestao_pedidos_verificacao` e mostra a contagem de pedidos. Para restaurar de verdade sobre a produção, informe `gestao_pedidos` como segundo argumento (o script pede que você digite `RESTAURAR`, para a API e o frontend e os religa no fim).
 
+## Reset da demonstração
+
+Se o ambiente publicado for só uma demonstração (carga `CARGA_INICIAL=demonstracao`) e os dados forem alterados por quem acessa (pedidos novos, estoque zerado), dá para voltar ao estado inicial. **Isto APAGA todos os dados do banco**: use só se o ambiente for descartável e nunca em produção com dados reais.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao down -v
+```
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d
+```
+
+O `down -v` remove os containers e o volume do banco; o `up -d` recria tudo e o `db-init` recarrega a carga de demonstração (320 pedidos). As imagens já estão construídas, então não é preciso `--build`. A rota do túnel na Cloudflare não muda.
+
 ## Problemas comuns na primeira subida
 
 | Sintoma | Causa | Correção |
