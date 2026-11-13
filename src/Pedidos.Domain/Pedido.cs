@@ -4,6 +4,11 @@ public class Pedido
 {
     private readonly List<ItemPedido> _itens = [];
 
+    // Usado pelo EF Core ao materializar; o pedido só nasce válido por Criar.
+    private Pedido()
+    {
+    }
+
     private Pedido(int clienteId, DateTime dataCriacao, IEnumerable<ItemPedido> itens)
     {
         ClienteId = clienteId;
