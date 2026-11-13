@@ -19,6 +19,16 @@ Domain → (nenhuma) ← Application ← Infrastructure
 - **Infrastructure:** EF Core, consultas, transação e débito atômico de estoque no SQL Server.
 - **Api:** controllers, contratos HTTP, Problem Details, configuração.
 
+## Estrutura de pastas
+
+Nada solto na raiz dos projetos: um tipo por arquivo, em pasta que diz o que ele é, e o namespace segue a pasta (evitar pasta chamada `Pedidos`, que conflita com o namespace raiz). Os testes espelham essa estrutura.
+
+- **Domain:** `Entidades/`, `ObjetosDeValor/`, `Resultados/`, `Constantes/`.
+- **Application:** `Interfaces/` (as duas portas), `CasosDeUso/`, `Comandos/`, `Consultas/` (entradas das consultas), `Modelos/` (read models), `Validacao/`, `Comum/` (`Resultado`, `Erro`, códigos, mensagens).
+- **Infrastructure:** `Persistencia/Contexto/`, `Persistencia/Configuracoes/` (uma `IEntityTypeConfiguration` por entidade), `Persistencia/Repositorios/`, `Persistencia/Consultas/`; `DependencyInjection.cs` na raiz.
+- **Api:** `Controllers/`, `Contratos/Requisicoes/`, `Contratos/Respostas/`, `Erros/`.
+- **Testes:** `UnitTests/Domain/...`, `UnitTests/Application/...`; `IntegrationTests/Api/`, `Banco/`, `Persistencia/` e `Suporte/` (fixtures e auxiliares).
+
 **Proibido** sem necessidade concreta documentada: MediatR, barramento de eventos, repositório genérico, Unit of Work próprio, CQRS formal, interfaces criadas por convenção, AutoMapper, FluentValidation.
 
 ## Regras de ouro
