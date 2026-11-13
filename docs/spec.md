@@ -285,6 +285,9 @@ Somente leitura, sem filtros nem paginação, para os seletores do frontend:
 - `GET /clientes` → `200 [{ "id": 3, "nome": "Maria Silva" }]`, ordenado por `nome`, `id`.
 - `GET /produtos` → `200 [{ "id": 7, "nome": "Teclado", "preco": 89.90, "estoque": 12 }]`, ordenado por `nome`, `id`.
 
+### 4.5 Endpoint operacional **[D-21]**
+`GET /api/saude` → `200` com o texto `Healthy` quando a API consegue consultar o banco; `503` com `Unhealthy` quando não consegue. É usado pelo healthcheck do Compose e não faz parte do contrato de negócio.
+
 ---
 
 ## 5. Frontend (comportamento esperado)
@@ -396,3 +399,4 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | D-18 | Criação com filtros ativos | Limpar filtros, voltar à página 1 e atualizar | Garante que o pedido criado fique visível. |
 | D-19 | Nomes no banco | Tabelas no singular e colunas em snake_case (`cliente`, `produto`, `pedido`, `item_pedido`; `data_criacao`, `valor_total`...) | Padrão definido pelo autor; atributos em PascalCase e JSON em camelCase são traduzidos no mapeamento. |
 | D-20 | Prefixo das rotas | Todos os endpoints sob `/api` (`/api/pedidos`, `/api/relatorios/top-clientes`, `/api/clientes`, `/api/produtos`) | Padrão definido pelo autor; os caminhos das seções 4 e 6 são relativos ao prefixo. O frontend e o proxy usam o mesmo prefixo, sem reescrita. |
+| D-21 | Saúde da API | `GET /api/saude` consulta o banco (200 ou 503) | Healthcheck que reflete a dependência real, em vez de só testar a porta. |
