@@ -23,7 +23,7 @@ public class RestricoesTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>, 
         "ck_item_pedido_quantidade")]
     [InlineData("INSERT INTO dbo.item_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES (11, 7, 1, 0)",
         "ck_item_pedido_preco_unitario")]
-    public async Task Check_rejeita_valor_invalido(string sql, string restricao)
+    public async Task CheckRejeitaValorInvalido(string sql, string restricao)
     {
         var erro = await banco.ErroDoComandoAsync(sql);
 
@@ -34,7 +34,7 @@ public class RestricoesTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>, 
 
     [Fact]
     [Trait("CA", "CA-36")]
-    public async Task Item_duplicado_no_mesmo_pedido_e_rejeitado()
+    public async Task RejeitaItemDuplicadoNoPedido()
     {
         // O pedido 1 já tem o produto 3 na carga inicial.
         var erro = await banco.ErroDoComandoAsync(
@@ -47,7 +47,7 @@ public class RestricoesTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>, 
 
     [Fact]
     [Trait("CA", "CA-36")]
-    public async Task Gravacao_valida_equivalente_e_aceita()
+    public async Task AceitaGravacaoValida()
     {
         // Controle: sem a violação, o mesmo tipo de comando funciona (as rejeições acima vêm das restrições).
         // Usa o pedido 12 para não colidir com o par (11, 7) das inserções inválidas, que independem da ordem.

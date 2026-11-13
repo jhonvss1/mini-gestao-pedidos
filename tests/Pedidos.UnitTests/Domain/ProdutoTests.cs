@@ -10,7 +10,7 @@ public class ProdutoTests
     [InlineData(5, 6, false)]
     [InlineData(0, 1, false)]
     [InlineData(int.MaxValue, int.MaxValue, true)]
-    public void TemEstoque_compara_saldo_com_quantidade(int estoque, int quantidade, bool esperado)
+    public void TemEstoqueComparaSaldoComQuantidade(int estoque, int quantidade, bool esperado)
     {
         var produto = new Produto(1, "Teclado", 89.90m, estoque);
 
@@ -18,7 +18,7 @@ public class ProdutoTests
     }
 
     [Fact]
-    public void TemEstoque_nao_altera_o_saldo()
+    public void TemEstoqueNaoAlteraSaldo()
     {
         var produto = new Produto(1, "Teclado", 89.90m, 5);
 
@@ -30,7 +30,7 @@ public class ProdutoTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void TemEstoque_rejeita_quantidade_nao_positiva(int quantidade)
+    public void TemEstoqueRejeitaQuantidadeNaoPositiva(int quantidade)
     {
         var produto = new Produto(1, "Teclado", 89.90m, 5);
 
@@ -38,7 +38,7 @@ public class ProdutoTests
     }
 
     [Fact]
-    public void Expoe_os_valores_informados()
+    public void ExpoeValoresInformados()
     {
         var produto = new Produto(7, "Hub USB", 59.90m, 80);
 
@@ -49,7 +49,7 @@ public class ProdutoTests
     }
 
     [Fact]
-    public void Aceita_estoque_zero()
+    public void AceitaEstoqueZero()
     {
         var produto = new Produto(5, "Webcam HD", 199.90m, 0);
 
@@ -62,7 +62,7 @@ public class ProdutoTests
     [InlineData(1, "Teclado", 0, 1)]
     [InlineData(1, "Teclado", -0.01, 1)]
     [InlineData(1, "Teclado", 10, -1)]
-    public void Rejeita_valores_invalidos_numericos(int id, string nome, double preco, int estoque)
+    public void RejeitaValoresNumericosInvalidos(int id, string nome, double preco, int estoque)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Produto(id, nome, (decimal)preco, estoque));
     }
@@ -70,7 +70,7 @@ public class ProdutoTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Rejeita_nome_em_branco(string nome)
+    public void RejeitaNomeEmBranco(string nome)
     {
         Assert.Throws<ArgumentException>(() => new Produto(1, nome, 10m, 1));
     }

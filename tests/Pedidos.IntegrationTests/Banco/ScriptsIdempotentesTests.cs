@@ -6,7 +6,7 @@ public class ScriptsIdempotentesTests(BancoDeTeste banco) : IClassFixture<BancoD
 {
     [Fact]
     [Trait("CA", "CA-34")]
-    public async Task Reexecutar_schema_e_seed_nao_falha_nem_duplica_dados()
+    public async Task ReexecucaoNaoFalhaNemDuplicaDados()
     {
         await banco.ExecutarScriptAsync("02-seed.sql");
         var antes = await ContagensAsync();

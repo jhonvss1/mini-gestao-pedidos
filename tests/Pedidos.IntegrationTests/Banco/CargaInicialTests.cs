@@ -14,7 +14,7 @@ public class CargaInicialTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-35")]
-    public async Task Tem_ao_menos_7_clientes_com_dois_homonimos_distintos()
+    public async Task TemAoMenosSeteClientesComHomonimos()
     {
         Assert.True(await banco.EscalarAsync<int>("SELECT COUNT(*) FROM dbo.cliente") >= 7);
         Assert.True(await banco.EscalarAsync<int>(
@@ -23,7 +23,7 @@ public class CargaInicialTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-35")]
-    public async Task Tem_ao_menos_6_produtos_com_estoque_baixo_e_estoque_zero()
+    public async Task TemAoMenosSeisProdutosComEstoqueBaixoEZero()
     {
         Assert.True(await banco.EscalarAsync<int>("SELECT COUNT(*) FROM dbo.produto") >= 6);
         Assert.True(await banco.EscalarAsync<int>("SELECT COUNT(*) FROM dbo.produto WHERE estoque = 5") >= 1);
@@ -32,7 +32,7 @@ public class CargaInicialTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-35")]
-    public async Task Tem_6_ou_mais_clientes_com_pedidos_no_mesmo_periodo_em_dois_periodos()
+    public async Task TemSeisClientesComPedidosEmDoisPeriodos()
     {
         var periodosComSeisClientes = await banco.EscalarAsync<int>($"""
             SELECT COUNT(*) FROM (
@@ -45,7 +45,7 @@ public class CargaInicialTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-35")]
-    public async Task Tem_empate_de_total_entre_clientes_no_mesmo_periodo()
+    public async Task TemEmpateDeTotalNoMesmoPeriodo()
     {
         var empates = await banco.EscalarAsync<int>($"""
             SELECT COUNT(*) FROM (
@@ -60,7 +60,7 @@ public class CargaInicialTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-35")]
-    public async Task Todo_pedido_tem_itens_e_valor_total_igual_a_soma_dos_itens()
+    public async Task TotalDoPedidoIgualASomaDosItens()
     {
         var semItens = await banco.EscalarAsync<int>(
             "SELECT COUNT(*) FROM dbo.pedido p WHERE NOT EXISTS (SELECT 1 FROM dbo.item_pedido i WHERE i.pedido_id = p.id)");

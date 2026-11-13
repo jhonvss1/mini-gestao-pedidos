@@ -5,7 +5,7 @@ namespace Pedidos.UnitTests.Domain;
 public class ClienteTests
 {
     [Fact]
-    public void Expoe_os_valores_informados()
+    public void ExpoeValoresInformados()
     {
         var cliente = new Cliente(3, "João Souza");
 
@@ -16,7 +16,7 @@ public class ClienteTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void Rejeita_id_nao_positivo(int id)
+    public void RejeitaIdNaoPositivo(int id)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Cliente(id, "Maria"));
     }
@@ -24,7 +24,7 @@ public class ClienteTests
     [Theory]
     [InlineData("")]
     [InlineData("  ")]
-    public void Rejeita_nome_em_branco(string nome)
+    public void RejeitaNomeEmBranco(string nome)
     {
         Assert.Throws<ArgumentException>(() => new Cliente(1, nome));
     }

@@ -9,7 +9,7 @@ public class EsquemaTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
     [InlineData("produto", "preco")]
     [InlineData("item_pedido", "preco_unitario")]
     [InlineData("pedido", "valor_total")]
-    public async Task Colunas_monetarias_sao_decimal_18_2(string tabela, string coluna)
+    public async Task ColunaMonetariaEDecimal18Por2(string tabela, string coluna)
     {
         var tipo = await banco.EscalarAsync<string>($"""
             SELECT DATA_TYPE + '(' + CAST(NUMERIC_PRECISION AS varchar(5)) + ',' + CAST(NUMERIC_SCALE AS varchar(5)) + ')'
@@ -22,7 +22,7 @@ public class EsquemaTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-37")]
-    public async Task Nenhuma_coluna_usa_tipo_de_ponto_flutuante_ou_money()
+    public async Task NaoUsaFloatNemMoney()
     {
         var proibidas = await banco.EscalarAsync<int>("""
             SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
@@ -34,7 +34,7 @@ public class EsquemaTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>
 
     [Fact]
     [Trait("CA", "CA-37")]
-    public async Task Data_de_criacao_do_pedido_e_datetime2_com_precisao_de_segundos()
+    public async Task DataCriacaoEDatetime2ComSegundos()
     {
         var tipo = await banco.EscalarAsync<string>("""
             SELECT DATA_TYPE + '(' + CAST(DATETIME_PRECISION AS varchar(5)) + ')'
