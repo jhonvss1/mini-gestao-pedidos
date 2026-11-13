@@ -60,6 +60,29 @@ public sealed class BancoDeTeste : IAsyncLifetime
             System.Globalization.CultureInfo.InvariantCulture,
             $"INSERT INTO dbo.produto (nome, preco, estoque) OUTPUT INSERTED.id VALUES (N'{nome}', {preco}, {estoque})"));
 
+    /// <summary>Insere um pedido já consolidado (itens e total coerentes com RN-05), sem mexer no estoque.</summary>
+    public async Task<int> InserirPedidoAsync(
+        int clienteId,
+        DateTime dataCriacao,
+        params (int ProdutoId, int Quantidade, decimal PrecoUnitario)[] itens)
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var total = itens.Sum(i => i.Quantidade * i.PrecoUnitario);
+        var data = dataCriacao.ToString("yyyy-MM-ddTHH:mm:ss", inv);
+        var pedidoId = await EscalarAsync<int>(string.Create(
+            inv,
+            $"INSERT INTO dbo.pedido (cliente_id, data_criacao, valor_total) OUTPUT INSERTED.id VALUES ({clienteId}, '{data}', {total})"));
+
+        foreach (var (produtoId, quantidade, preco) in itens)
+        {
+            await ErroDoComandoAsync(string.Create(
+                inv,
+                $"INSERT INTO dbo.item_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES ({pedidoId}, {produtoId}, {quantidade}, {preco})"));
+        }
+
+        return pedidoId;
+    }
+
     public Task<int> EstoqueAsync(int produtoId) =>
         EscalarAsync<int>($"SELECT estoque FROM dbo.produto WHERE id = {produtoId}");
 
