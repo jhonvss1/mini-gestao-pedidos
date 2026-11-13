@@ -49,9 +49,14 @@ services:
       ConnectionStrings__Pedidos: "Server=db,1433;Database=gestao_pedidos;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!};TrustServerCertificate=True"
     ports:
       - "${API_PORT:-5080}:8080"
-    # A imagem do ASP.NET não traz curl nem wget: o teste só confirma que a porta aceita conexões.
+    # A imagem do ASP.NET não traz curl nem wget: a requisição HTTP a /api/saude (que consulta o banco) é feita com o
+    # /dev/tcp do bash, e o teste só passa com resposta 200.
     healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      test:
+        - CMD
+        - bash
+        - -c
+        - "exec 3<>/dev/tcp/127.0.0.1/8080; printf 'GET /api/saude HTTP/1.0\\r\\n\\r\\n' >&3; head -n 1 <&3 | grep -q ' 200 '"
       interval: 5s
       timeout: 5s
       retries: 20
