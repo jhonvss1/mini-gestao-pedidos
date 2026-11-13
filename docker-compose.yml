@@ -38,5 +38,38 @@ services:
         sql -d gestao_pedidos -i /scripts/02-seed.sql
         echo "Banco gestao_pedidos pronto."
 
+  api:
+    build:
+      context: .
+      dockerfile: src/Pedidos.Api/Dockerfile
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      ConnectionStrings__Pedidos: "Server=db,1433;Database=gestao_pedidos;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!};TrustServerCertificate=True"
+    ports:
+      - "${API_PORT:-5080}:8080"
+    # A imagem do ASP.NET não traz curl nem wget: o teste só confirma que a porta aceita conexões.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   mssql-data:
