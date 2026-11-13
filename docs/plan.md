@@ -224,7 +224,7 @@ frontend/src/app/
 - **Criação:** cliente + linhas dinâmicas (produto, quantidade), envio bloqueado sem itens ou com quantidade ≤ 0 e **desabilitado durante o envio** (evita duplicidade); total estimado em **centavos inteiros** (`Math.round(preco * 100) * quantidade`) com aviso de que o valor final é o do servidor; exibição com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
 - **Erros da API:** o `ApiError` (mapeado do Problem Details) alimenta um **`ErrosService` escopado à tela** (provido no componente; limpo ao reenviar e ao sair; sem estado global que vaze erros antigos entre rotas). O `ErrosApiComponent` lista os erros e `porCampo('itens[0].quantidade')` liga mensagens aos controles. `422` → mensagens por campo; `404` → mensagem sobre o cliente/produto; `409` → lista de produtos com solicitado/disponível; `400`/`5xx` → mensagem geral via `NotificacaoService`. O formulário **não é limpo** em caso de erro (CA-39).
 - **Após `201`:** limpa filtros, volta à página 1 e recarrega (D-18, CA-40).
-- **Rede:** em desenvolvimento, `proxy.conf.json` leva `/api` à API; no Compose, o nginx serve o build e faz proxy de `/api/` **removendo o prefixo**, preservando os contratos da spec e evitando CORS.
+- **Rede:** a API já responde sob `/api` (spec D-20), então o frontend chama `/api/...` e nenhum proxy reescreve o caminho. Em desenvolvimento, `proxy.conf.json` leva `/api` à API **sem alterar o caminho**; no Compose, o nginx serve o build e faz proxy de `/api/` **mantendo o prefixo**, o que evita CORS.
 
 ---
 
@@ -252,7 +252,7 @@ frontend/src/app/
 - Convenção de rastreio: cada teste recebe `[Trait("CA", "CA-14")]`, base para a skill `verificar-ca` (6.3).
 
 ### 4.4 Verificação do Docker Compose (CA-33, separada dos testes)
-`scripts/verificar-compose.ps1` executa e o README descreve o mesmo procedimento: `docker compose down -v` → `up -d --build --wait` → conferência de saúde dos serviços → contagens do seed via `sqlcmd` no container → chamadas a `GET /pedidos`, `GET /relatorios/top-clientes` e um `POST /pedidos` → `GET /` do frontend → nova execução de `db-init` para provar idempotência (CA-34).
+`scripts/verificar-compose.ps1` executa e o README descreve o mesmo procedimento: `docker compose down -v` → `up -d --build --wait` → conferência de saúde dos serviços → contagens do seed via `sqlcmd` no container → chamadas a `GET /api/pedidos`, `GET /api/relatorios/top-clientes` e um `POST /api/pedidos` → `GET /` do frontend → nova execução de `db-init` para provar idempotência (CA-34).
 
 ### 4.5 Relação com os critérios de aceite
 | Critérios | Camada principal |
@@ -274,7 +274,7 @@ frontend/src/app/
 | `db` | `mcr.microsoft.com/mssql/server:2022-latest` (tag fixada na implementação) | `sqlcmd -C -Q "SELECT 1"` (intervalo 5 s, `start_period` 20 s, 20 tentativas) | — |
 | `db-init` | mesma imagem (contém `sqlcmd`), scripts montados somente leitura | — (serviço de uma execução, `restart: "no"`) | `db` saudável |
 | `api` | build multi-stage `sdk:10.0` → `aspnet:10.0`, porta 8080 | verificação TCP na porta 8080 (a imagem não traz `curl`) | `db-init` com `service_completed_successfully` |
-| `frontend` | build `node` → `nginx:alpine`, `nginx.conf` com proxy `/api/` | `wget -qO- http://localhost/` | `api` saudável |
+| `frontend` | build `node` → `nginx:alpine`, `nginx.conf` com proxy `/api/` (mantém o prefixo) | `wget -qO- http://localhost/` | `api` saudável |
 
 - `db-init` executa `00-create-database.sql` (no `master`), depois `01-schema.sql` e `02-seed.sql` no banco `gestao_pedidos`, com `sqlcmd -b` (aborta em erro). Idempotente: pode rodar a cada `up`.
 - Garantia de `docker compose up`: senha do SA com **valor padrão de desenvolvimento** (`${MSSQL_SA_PASSWORD:-...}`) para funcionar sem copiar `.env`; `.env.example` documenta a variável; `.env` é ignorado pelo git (PD-8). Portas: frontend `4200→80`, API `5080→8080`, banco `1433→1433` (necessária para `sqlcmd` local e MCP); volume nomeado `mssql-data` (`down -v` zera).
