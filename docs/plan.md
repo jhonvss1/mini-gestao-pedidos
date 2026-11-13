@@ -276,7 +276,7 @@ frontend/src/app/
 | `api` | build multi-stage `sdk:10.0` → `aspnet:10.0`, porta 8080 | verificação TCP na porta 8080 (a imagem não traz `curl`) | `db-init` com `service_completed_successfully` |
 | `frontend` | build `node` → `nginx:alpine`, `nginx.conf` com proxy `/api/` | `wget -qO- http://localhost/` | `api` saudável |
 
-- `db-init` executa `00-create-database.sql` (no `master`), depois `01-schema.sql` e `02-seed.sql` no banco `Pedidos`, com `sqlcmd -b` (aborta em erro). Idempotente: pode rodar a cada `up`.
+- `db-init` executa `00-create-database.sql` (no `master`), depois `01-schema.sql` e `02-seed.sql` no banco `gestao_pedidos`, com `sqlcmd -b` (aborta em erro). Idempotente: pode rodar a cada `up`.
 - Garantia de `docker compose up`: senha do SA com **valor padrão de desenvolvimento** (`${MSSQL_SA_PASSWORD:-...}`) para funcionar sem copiar `.env`; `.env.example` documenta a variável; `.env` é ignorado pelo git (PD-8). Portas: frontend `4200→80`, API `5080→8080`, banco `1433→1433` (necessária para `sqlcmd` local e MCP); volume nomeado `mssql-data` (`down -v` zera).
 - `--wait` no `up` depende dos healthchecks; por isso todos os serviços de longa duração têm um.
 - Nomes de comandos do `sqlcmd` e caminho das ferramentas na imagem serão confirmados no E3 (**a verificar**, não assumidos).
@@ -341,7 +341,7 @@ frontend/src/app/
 - **Desempenho:** função sobre coluna filtrada (ex.: conversão de data) impedindo `Seek`; subconsulta correlacionada; `SELECT *`; ausência de índice de apoio; ordenação sem índice; conversões implícitas.
 
 ### 7.3 Dados
-Seed pequeno (correção) + `database/investigacao/gerar-volume.sql` (geração em conjunto, determinística, base separada `PedidosVolume`, ordem de grandeza a definir, p. ex. centenas de milhares de pedidos). Nunca incluída nos testes nem no Compose padrão.
+Seed pequeno (correção) + `database/investigacao/gerar-volume.sql` (geração em conjunto, determinística, base separada `gestao_pedidos_volume`, ordem de grandeza a definir, p. ex. centenas de milhares de pedidos). Nunca incluída nos testes nem no Compose padrão.
 
 ### 7.4 Comparar resultados
 Executar original e corrigida no seed e no volume; comparar com `EXCEPT` nos dois sentidos, contagem de linhas e `CHECKSUM_AGG`; recalcular o total por uma consulta independente (`SUM(quantidade * preco_unitario)` sobre `item_pedido`) para expor multiplicação de linhas. Toda diferença entre original e corrigida precisa ser explicada linha a linha.

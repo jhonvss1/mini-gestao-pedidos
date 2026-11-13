@@ -34,7 +34,7 @@ Domain → (nenhuma) ← Application ← Infrastructure
 
 `database/` é a fonte do schema: `00-create-database.sql`, `01-schema.sql`, `02-seed.sql`. Idempotentes, sem `GO`. Sem migrations e sem `EnsureCreated`.
 
-Nomes no banco: **tabelas no singular** (`cliente`, `produto`, `pedido`, `item_pedido`) e **colunas em snake_case** (`cliente_id`, `data_criacao`, `valor_total`, `preco_unitario`); restrições e índices no mesmo padrão (`ck_produto_estoque`, `ix_pedido_data_criacao_id`). C# em PascalCase e JSON em camelCase; a tradução é explícita no mapeamento do EF e o SQL escrito à mão usa os nomes do banco.
+Banco: `gestao_pedidos`. Nomes no banco: **tabelas no singular** (`cliente`, `produto`, `pedido`, `item_pedido`) e **colunas em snake_case** (`cliente_id`, `data_criacao`, `valor_total`, `preco_unitario`); restrições e índices no mesmo padrão (`ck_produto_estoque`, `ix_pedido_data_criacao_id`). C# em PascalCase e JSON em camelCase; a tradução é explícita no mapeamento do EF e o SQL escrito à mão usa os nomes do banco.
 
 ## Comandos
 
