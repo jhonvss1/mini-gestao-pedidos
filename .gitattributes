@@ -1,0 +1,2 @@
+# Scripts de shell rodam no Linux (servidor, containers): mantêm LF mesmo em checkouts no Windows.
+*.sh text eol=lf
