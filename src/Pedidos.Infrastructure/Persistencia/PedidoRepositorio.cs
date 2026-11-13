@@ -1,7 +1,9 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Pedidos.Application;
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
+using Pedidos.Domain.ObjetosDeValor;
+using Pedidos.Domain.Resultados;
 
 namespace Pedidos.Infrastructure.Persistencia;
 

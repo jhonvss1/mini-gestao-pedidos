@@ -1,4 +1,7 @@
-using Pedidos.Domain;
+using Pedidos.Domain.Constantes;
+using Pedidos.Domain.Entidades;
+using Pedidos.Domain.ObjetosDeValor;
+using Pedidos.Domain.Resultados;
 
 namespace Pedidos.UnitTests.Domain;
 

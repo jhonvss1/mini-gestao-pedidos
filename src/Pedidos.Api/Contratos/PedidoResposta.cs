@@ -1,4 +1,4 @@
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
 
 namespace Pedidos.Api.Contratos;
 

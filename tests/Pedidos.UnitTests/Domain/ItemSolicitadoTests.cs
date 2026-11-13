@@ -1,4 +1,4 @@
-using Pedidos.Domain;
+using Pedidos.Domain.ObjetosDeValor;
 
 namespace Pedidos.UnitTests.Domain;
 

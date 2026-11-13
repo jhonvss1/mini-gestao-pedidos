@@ -1,5 +1,8 @@
-namespace Pedidos.Domain;
+using Pedidos.Domain.Constantes;
+using Pedidos.Domain.ObjetosDeValor;
+using Pedidos.Domain.Resultados;
 
+namespace Pedidos.Domain.Entidades;
 public class Pedido
 {
     private readonly List<ItemPedido> _itens = [];

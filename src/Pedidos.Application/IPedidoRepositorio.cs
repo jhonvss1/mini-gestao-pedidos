@@ -1,4 +1,6 @@
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
+using Pedidos.Domain.ObjetosDeValor;
+using Pedidos.Domain.Resultados;
 
 namespace Pedidos.Application;
 

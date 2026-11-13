@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
+using Pedidos.Domain.ObjetosDeValor;
+using Pedidos.Domain.Resultados;
 using Pedidos.Infrastructure.Persistencia;
 using Pedidos.IntegrationTests.Infra;
 

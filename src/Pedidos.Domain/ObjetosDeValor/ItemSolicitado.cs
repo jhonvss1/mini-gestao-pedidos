@@ -1,5 +1,7 @@
-namespace Pedidos.Domain;
+using Pedidos.Domain.Constantes;
+using Pedidos.Domain.Resultados;
 
+namespace Pedidos.Domain.ObjetosDeValor;
 /// <summary>Produto e quantidade pedidos, ainda sem preço (o preço vem do cadastro, RN-04).</summary>
 public sealed record ItemSolicitado
 {
@@ -40,11 +42,4 @@ public sealed record ItemSolicitado
 
         return new ResultadoConsolidacao(consolidados, excedidos);
     }
-}
-
-public sealed record ResultadoConsolidacao(
-    IReadOnlyList<ItemSolicitado> Itens,
-    IReadOnlyList<int> ProdutosComQuantidadeExcedida)
-{
-    public bool Valido => ProdutosComQuantidadeExcedida.Count == 0;
 }

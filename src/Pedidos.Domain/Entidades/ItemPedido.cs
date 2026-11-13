@@ -1,5 +1,4 @@
-namespace Pedidos.Domain;
-
+namespace Pedidos.Domain.Entidades;
 public class ItemPedido
 {
     internal ItemPedido(int produtoId, int quantidade, decimal precoUnitario)

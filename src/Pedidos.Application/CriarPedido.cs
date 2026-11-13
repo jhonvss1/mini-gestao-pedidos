@@ -1,12 +1,9 @@
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
+using Pedidos.Domain.Resultados;
 
 namespace Pedidos.Application;
 
-/// <summary>
-/// Caso de uso de criação de pedido. Etapas da RN-11, parando na primeira com falhas:
-/// 1 estrutura (validador), 2 cliente, 3 produtos e limites monetários e 4 estoque (decisão de domínio
-/// executada pelo repositório dentro da transação).
-/// </summary>
+
 public sealed class CriarPedido(IPedidoRepositorio repositorio, TimeProvider relogio)
 {
     public async Task<Resultado<Pedido>> ExecutarAsync(CriarPedidoComando comando, CancellationToken cancellationToken)

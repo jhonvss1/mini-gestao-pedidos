@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pedidos.Application;
-using Pedidos.Domain;
+using Pedidos.Domain.Entidades;
 
 namespace Pedidos.Infrastructure.Persistencia;
 

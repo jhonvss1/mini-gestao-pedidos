@@ -1,5 +1,4 @@
-namespace Pedidos.Domain;
-
+namespace Pedidos.Domain.Constantes;
 /// <summary>Limites numéricos do domínio (RN-24).</summary>
 public static class Limites
 {

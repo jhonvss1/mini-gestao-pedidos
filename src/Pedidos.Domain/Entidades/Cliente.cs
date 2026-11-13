@@ -1,5 +1,4 @@
-namespace Pedidos.Domain;
-
+namespace Pedidos.Domain.Entidades;
 public class Cliente
 {
     public Cliente(int id, string nome)
