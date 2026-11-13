@@ -1,0 +1,32 @@
+@if (erros.erro(); as erro) {
+  <div class="erros" role="alert">
+    @switch (erro.codigo) {
+      @case ('VALIDACAO') {
+        <p>Há campos inválidos. Corrija-os e envie novamente.</p>
+      }
+      @case ('PRODUTO_NAO_ENCONTRADO') {
+        <p>Um ou mais produtos não existem. Atualize a tela e selecione novamente:</p>
+        <ul>
+          @for (produto of erro.produtos; track produto.produtoId) {
+            <li>{{ produto.mensagem }}</li>
+          }
+        </ul>
+      }
+      @case ('ESTOQUE_INSUFICIENTE') {
+        <p>Estoque insuficiente. Ajuste as quantidades e envie novamente:</p>
+        <ul>
+          @for (produto of erro.produtos; track produto.produtoId) {
+            <li>
+              {{ nomeDoProduto()(produto.produtoId) }}: solicitado {{ produto.solicitado }},
+              disponível
+              {{ produto.disponivel }}
+            </li>
+          }
+        </ul>
+      }
+      @default {
+        <p>{{ erro.mensagem }}</p>
+      }
+    }
+  </div>
+}

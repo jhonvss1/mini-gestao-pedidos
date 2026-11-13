@@ -1,0 +1,16 @@
+.erros {
+  padding: var(--espaco-3);
+  color: var(--erro);
+  background: var(--superficie);
+  border: 1px solid var(--erro);
+  border-radius: var(--raio);
+}
+
+p {
+  margin: 0;
+}
+
+ul {
+  margin: var(--espaco-2) 0 0;
+  padding-left: var(--espaco-4);
+}

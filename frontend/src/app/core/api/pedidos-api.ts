@@ -1,7 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ConsultaPedidos, PaginaDePedidos } from '../modelos/pedido';
+import {
+  ConsultaPedidos,
+  CriarPedidoRequisicao,
+  PaginaDePedidos,
+  PedidoCriado,
+} from '../modelos/pedido';
 
 @Injectable({ providedIn: 'root' })
 export class PedidosApi {
@@ -23,5 +28,9 @@ export class PedidosApi {
     }
 
     return this.http.get<PaginaDePedidos>('/api/pedidos', { params });
+  }
+
+  criar(requisicao: CriarPedidoRequisicao): Observable<PedidoCriado> {
+    return this.http.post<PedidoCriado>('/api/pedidos', requisicao);
   }
 }

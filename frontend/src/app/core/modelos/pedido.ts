@@ -35,3 +35,29 @@ export interface ConsultaPedidos extends FiltrosAplicados {
   pagina: number;
   tamanhoPagina: number;
 }
+
+export interface ItemRequisicao {
+  produtoId: number;
+  quantidade: number;
+}
+
+/** Corpo do POST /api/pedidos. Não há preço: ele vem do cadastro do produto (RN-04). */
+export interface CriarPedidoRequisicao {
+  clienteId: number;
+  itens: ItemRequisicao[];
+}
+
+export interface ItemPedidoCriado {
+  produtoId: number;
+  quantidade: number;
+  precoUnitario: number;
+  subtotal: number;
+}
+
+export interface PedidoCriado {
+  id: number;
+  clienteId: number;
+  dataCriacao: string;
+  valorTotal: number;
+  itens: ItemPedidoCriado[];
+}
