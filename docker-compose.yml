@@ -26,7 +26,8 @@ services:
     restart: "no"
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!}
-      # Carga de demonstração (02-seed.sql): ligada por padrão em desenvolvimento, desligada em produção.
+      # Carga de dados: "true" = carga pequena de desenvolvimento (02-seed.sql, padrão aqui), "demonstracao" = carga
+      # maior para o ambiente publicado (05-seed-demonstracao.sql) e "false" = banco vazio. Só entra se cliente estiver vazia.
       CARGA_INICIAL: ${CARGA_INICIAL:-true}
       # Se definida, cria o login restrito app_pedidos (03 e 04) para a API usar no lugar do sa. Vazia em desenvolvimento.
       SENHA_APP: ${SENHA_APP:-}
@@ -39,9 +40,12 @@ services:
         sql() { /opt/mssql-tools18/bin/sqlcmd -C -b -I -f 65001 -S db -U sa -P "$$MSSQL_SA_PASSWORD" "$$@"; }
         sql -d master -i /scripts/00-create-database.sql
         sql -d gestao_pedidos -i /scripts/01-schema.sql
-        if [ "$${CARGA_INICIAL}" = "true" ]; then
-          sql -d gestao_pedidos -i /scripts/02-seed.sql
-        fi
+        case "$${CARGA_INICIAL}" in
+          true) sql -d gestao_pedidos -i /scripts/02-seed.sql ;;
+          demonstracao) sql -d gestao_pedidos -i /scripts/05-seed-demonstracao.sql ;;
+          false) ;;
+          *) echo "CARGA_INICIAL invalida: use true, demonstracao ou false." >&2; exit 1 ;;
+        esac
         if [ -n "$${SENHA_APP}" ]; then
           sql -d master -v SENHA_APP="$$SENHA_APP" -i /scripts/03-login-aplicacao.sql
           sql -d gestao_pedidos -i /scripts/04-permissoes-aplicacao.sql
