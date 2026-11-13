@@ -77,6 +77,7 @@ Todos sob o prefixo `/api` (decisão D-20). Erros seguem o formato Problem Detai
 | `GET /api/pedidos` | Lista com filtros `clienteId`, `dataInicio`, `dataFim` (`yyyy-MM-dd`, inclusivos, UTC) e `pagina`, `tamanhoPagina` (padrão 20, máximo 100) |
 | `GET /api/relatorios/top-clientes` | Até 5 clientes por valor total no período (`dataInicio` e `dataFim` obrigatórios) |
 | `GET /api/clientes`, `GET /api/produtos` | Leituras auxiliares para os seletores do frontend |
+| `GET /api/saude` | Saúde da API: `200 Healthy` se o banco responde, `503` se não (usado pelo healthcheck do Compose) |
 
 Criar um pedido:
 
@@ -128,6 +129,18 @@ Com o ambiente no ar, em http://localhost:4200:
 1. **Listagem (CA-38):** os pedidos aparecem do mais recente para o mais antigo, com o total no rodapé. Filtre por cliente, por data inicial, por data final e por combinações; o total muda a cada filtro. Os dois "João Souza" aparecem como "João Souza (#3)" e "João Souza (#5)". Com data inicial depois da final, o erro aparece e nenhuma requisição sai. Mude "Por página" e navegue entre as páginas.
 2. **Criação com erros (CA-39):** em "Novo pedido", o botão fica desabilitado sem cliente, sem produto ou com quantidade menor que 1. Escolha o produto "Webcam HD" (sem estoque) e envie: aparece o aviso de estoque com solicitado e disponível, e **o formulário continua preenchido**.
 3. **Criação com sucesso (CA-40):** com filtros ativos na listagem, crie um pedido válido. A listagem volta com filtros limpos, na página 1, com o pedido novo no topo e o aviso de sucesso. Reabra o formulário: o estoque do produto está menor.
+
+## Produção
+
+Há uma camada de produção sobre o Compose, pensada para **uma instância EC2 com o banco em container** e o **Cloudflare Tunnel** expondo o site sem abrir portas de entrada. O passo a passo (AWS, Cloudflare, segredos, deploy, backup e restauração) está em [docs/producao.md](docs/producao.md).
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d --build
+```
+
+Diferenças em relação ao desenvolvimento: nenhuma porta publicada, senhas obrigatórias (modelo em [.env.producao.example](.env.producao.example)), a API conecta com o login restrito `app_pedidos` (só o que ela usa, não o `sa`), SQL Server na edição Express (a Developer não é licenciada para produção), carga de demonstração desligada por padrão, reinício automático e backup com `scripts/backup-banco.sh`.
+
+> **Nunca** rode `docker compose down -v` nem `scripts/verificar-compose.ps1` em produção: ambos apagam o volume do banco.
 
 ## Arquitetura
 
@@ -201,8 +214,9 @@ Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem
 - **Carga muito acima da dos testes** pode estourar o timeout de comando enquanto uma requisição espera lock no `UPDATE` do estoque. A contenção nunca devolve 5xx nos testes, mas o limite de tempo é o padrão do EF Core.
 - **Atomicidade restrita à requisição (D-16):** uma resposta 5xx ou uma queda de conexão não garante que nada foi gravado (a conexão pode cair depois do commit). Valores `identity` podem ter lacunas após rollback.
 - **Preço alterado durante a criação** de um pedido fica fora do escopo: nenhum endpoint altera preços.
-- **Healthcheck da API** só confirma que a porta aceita conexões (a imagem do ASP.NET não traz `curl`); a ordem de dependência do Compose (`db-init` concluído) cobre o banco.
-- **Credencial de desenvolvimento** (senha do `sa`) está versionada de propósito, para o `docker compose up` funcionar sem passos extras. Serve só para ambiente local.
+- **Healthcheck da API** usa `GET /api/saude`, que consulta o banco; como a imagem do ASP.NET não traz `curl`, a requisição é feita com o `/dev/tcp` do bash.
+- **Credencial de desenvolvimento** (senha do `sa`) está versionada de propósito, para o `docker compose up` funcionar sem passos extras. Serve só para ambiente local; em produção as senhas ficam em `.env.producao`, fora do Git.
+- **Evolução do schema:** os scripts de `database/` só criam o que não existe; falta um mecanismo de versionamento para alterar o schema depois (ver [docs/producao.md](docs/producao.md)).
 - **Sem autenticação**, edição ou cancelamento de pedidos (fora do escopo, spec 1.4).
 - **Índices de `pedido`** (`ix_pedido_data_criacao_id` e `ix_pedido_cliente_id_data_criacao_id`) são hipóteses de projeto justificadas pelas consultas, **ainda sem medição** com volume.
 - **Investigação da query do enunciado** (etapa E21 do plano) está pendente: o texto da query não foi fornecido, então não há análise nem `docs/investigacao-query.md`. O plano descreve o método.

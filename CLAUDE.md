@@ -42,7 +42,7 @@ Nada solto na raiz dos projetos: um tipo por arquivo, em pasta que diz o que ele
 
 ## Banco
 
-`database/` é a fonte do schema: `00-create-database.sql`, `01-schema.sql`, `02-seed.sql`. Idempotentes, sem `GO`. Sem migrations e sem `EnsureCreated`.
+`database/` é a fonte do schema: `00-create-database.sql`, `01-schema.sql`, `02-seed.sql` (carga de demonstração, controlada por `CARGA_INICIAL`) e, para produção, `03-login-aplicacao.sql` e `04-permissoes-aplicacao.sql` (login `app_pedidos` com o mínimo de permissão, usado pela API no lugar do `sa`). Idempotentes, sem `GO`. Sem migrations e sem `EnsureCreated`.
 
 Banco: `gestao_pedidos`. Nomes no banco: **tabelas no singular** (`cliente`, `produto`, `pedido`, `item_pedido`) e **colunas em snake_case** (`cliente_id`, `data_criacao`, `valor_total`, `preco_unitario`); restrições e índices no mesmo padrão (`ck_produto_estoque`, `ix_pedido_data_criacao_id`). C# em PascalCase e JSON em camelCase; a tradução é explícita no mapeamento do EF e o SQL escrito à mão usa os nomes do banco.
 
@@ -57,7 +57,9 @@ dotnet run --project src/Pedidos.Api                # API em http://localhost:50
 npm start --prefix frontend                         # frontend em http://localhost:4200, /api via proxy.conf.json
 npm run build --prefix frontend                     # build de produção do frontend
 docker compose up --build                           # banco, api (5080) e frontend (4200)
-powershell -File scripts/verificar-compose.ps1      # CA-33/CA-34; APAGA o volume do banco (down -v)
+powershell -File scripts/verificar-compose.ps1      # CA-33/CA-34; APAGA o volume do banco (down -v), só em desenvolvimento
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d --build   # produção, ver docs/producao.md
+dotnet test Pedidos.slnx --artifacts-path .artifacts   # com a API local rodando (ela trava as DLLs de bin/)
 ```
 
 ## Testes
@@ -78,6 +80,7 @@ powershell -File scripts/verificar-compose.ps1      # CA-33/CA-34; APAGA o volum
 
 - Não ler `.env`. O `.env.example` não contém segredos.
 - Qualquer MCP de banco é somente leitura e só aponta para o banco local de desenvolvimento.
+- Produção: segredos só em `.env.producao` (fora do Git), nenhuma porta publicada, API com o login `app_pedidos`. Nunca `down -v` nem `verificar-compose.ps1` em produção (apagam o volume do banco).
 
 ## Definição de pronto de uma etapa
 
