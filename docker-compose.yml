@@ -2,7 +2,7 @@ name: gestao-pedidos
 
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-CU28-ubuntu-22.04
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Gestao_Pedidos_Dev_2026!}
@@ -19,7 +19,7 @@ services:
 
   # Serviço de uma execução: cria o banco, o schema e a carga inicial (scripts idempotentes).
   db-init:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-CU28-ubuntu-22.04
     depends_on:
       db:
         condition: service_healthy
