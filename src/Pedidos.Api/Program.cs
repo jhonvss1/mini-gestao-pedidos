@@ -17,6 +17,7 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<CriarPedido>();
+builder.Services.AddScoped<ListarPedidos>();
 builder.Services.AddInfraestrutura(stringConexao);
 
 var app = builder.Build();
