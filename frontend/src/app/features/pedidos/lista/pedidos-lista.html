@@ -1,0 +1,72 @@
+<section class="lista">
+  <h1>Pedidos</h1>
+
+  <app-pedidos-filtros [clientes]="clientes()" (filtrar)="aplicarFiltros($event)" />
+
+  @let atual = estado();
+
+  @if (atual.tipo === 'carregando') {
+    <p class="estado" role="status">Carregando pedidos…</p>
+  } @else if (atual.tipo === 'erro') {
+    <div class="estado erro" role="alert">
+      <p>{{ atual.erro.mensagem }}</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
+  } @else {
+    @if (atual.tipo === 'vazio') {
+      <p class="estado" role="status">
+        {{
+          atual.pagina.totalItens === 0
+            ? 'Nenhum pedido encontrado para os filtros informados.'
+            : 'Esta página não tem registros.'
+        }}
+      </p>
+    } @else {
+      <div class="tabela-rolavel">
+        <table>
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Cliente</th>
+              <th>Data</th>
+              <th>Itens</th>
+              <th class="numerico">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pedido of atual.pagina.registros; track pedido.id) {
+              <tr>
+                <td>#{{ pedido.id }}</td>
+                <td>{{ pedido.clienteNome }}</td>
+                <td>{{ pedido.dataCriacao | dataHora }}</td>
+                <td>
+                  <ul class="itens">
+                    @for (item of pedido.itens; track item.produtoId) {
+                      <li>
+                        {{ item.quantidade }} × {{ item.produtoNome }}
+                        <span class="suave">({{ item.precoUnitario | moeda }} cada)</span>
+                      </li>
+                    }
+                  </ul>
+                </td>
+                <td class="numerico">{{ pedido.valorTotal | moeda }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Também na página vazia além do fim (CA-24): o usuário precisa poder voltar. -->
+    @if (atual.pagina.totalItens > 0) {
+      <app-paginacao
+        [pagina]="atual.pagina.pagina"
+        [totalPaginas]="atual.pagina.totalPaginas"
+        [totalItens]="atual.pagina.totalItens"
+        [tamanhoPagina]="atual.pagina.tamanhoPagina"
+        (paginaAlterada)="irParaPagina($event)"
+        (tamanhoAlterado)="alterarTamanho($event)"
+      />
+    }
+  }
+</section>

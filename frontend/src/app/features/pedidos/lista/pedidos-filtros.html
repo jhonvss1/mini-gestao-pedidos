@@ -1,0 +1,30 @@
+<form class="filtros" [formGroup]="form" (ngSubmit)="aplicar()">
+  <div class="campo">
+    <label for="filtro-cliente">Cliente</label>
+    <select id="filtro-cliente" formControlName="clienteId">
+      <option value="">Todos</option>
+      @for (opcao of opcoes(); track opcao.id) {
+        <option [value]="opcao.id">{{ opcao.rotulo }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="campo">
+    <label for="filtro-inicio">Data inicial</label>
+    <input id="filtro-inicio" type="date" formControlName="dataInicio" />
+  </div>
+
+  <div class="campo">
+    <label for="filtro-fim">Data final</label>
+    <input id="filtro-fim" type="date" formControlName="dataFim" />
+  </div>
+
+  <div class="acoes">
+    <button type="submit" class="primario">Filtrar</button>
+    <button type="button" (click)="limpar()">Limpar</button>
+  </div>
+
+  @if (erroIntervalo(); as mensagem) {
+    <p class="erro" role="alert">{{ mensagem }}</p>
+  }
+</form>

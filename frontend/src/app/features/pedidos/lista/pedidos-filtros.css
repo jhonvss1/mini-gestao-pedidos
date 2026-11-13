@@ -1,0 +1,27 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  min-width: 11rem;
+}
+
+.acoes {
+  display: flex;
+  gap: var(--espaco-2);
+}
+
+.erro {
+  flex-basis: 100%;
+  margin: 0;
+}

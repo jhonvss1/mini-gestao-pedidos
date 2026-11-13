@@ -1,0 +1,64 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.estado {
+  padding: var(--espaco-4);
+  text-align: center;
+  color: var(--texto-suave);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.estado.erro {
+  color: var(--erro);
+  border-color: var(--erro);
+}
+
+.tabela-rolavel {
+  overflow-x: auto;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: var(--espaco-2) var(--espaco-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--borda);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+th.numerico,
+td.numerico {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suave {
+  color: var(--texto-suave);
+}
