@@ -1,0 +1,15 @@
+# Contexto de build da API (raiz do repositório): só o que o dotnet publish precisa.
+**/bin
+**/obj
+**/node_modules
+.git
+.idea
+.vs
+.claude
+.env
+docs
+database
+frontend
+tests
+scripts
+*.md
