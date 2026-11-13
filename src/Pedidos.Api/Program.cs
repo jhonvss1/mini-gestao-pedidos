@@ -25,6 +25,7 @@ builder.Services.AddInfraestrutura(stringConexao);
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.MapHealthChecks("/api/saude");
 app.MapControllers();
 
 app.Run();

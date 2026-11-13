@@ -25,6 +25,9 @@ public static class DependencyInjection
         services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
         services.AddScoped<IPedidoConsultas, PedidoConsultas>();
 
+        // Verifica de verdade se o banco responde; a Api só expõe o endpoint (MapHealthChecks).
+        services.AddHealthChecks().AddDbContextCheck<PedidosDbContext>("banco");
+
         return services;
     }
 }
