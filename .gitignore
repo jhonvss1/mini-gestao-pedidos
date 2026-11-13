@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+*.log
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# Segredos e configuração local
+.env
+.claude/settings.local.json
+
+# Dados locais
+*.mdf
+*.ldf

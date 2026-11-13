@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pedidos.Application\Pedidos.Application.csproj" />
+  </ItemGroup>
+
+</Project>
