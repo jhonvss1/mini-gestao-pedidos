@@ -1,0 +1,36 @@
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+}
+
+.marca {
+  font-weight: 700;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  gap: var(--espaco-3);
+}
+
+nav a {
+  color: var(--texto-suave);
+  text-decoration: none;
+}
+
+nav a.ativo {
+  color: var(--primaria);
+  font-weight: 600;
+}
+
+.conteudo {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--espaco-4);
+}
