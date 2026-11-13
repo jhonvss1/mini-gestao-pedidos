@@ -46,10 +46,8 @@ public class PedidoRepositorio(PedidosDbContext contexto, int maximoTentativasPo
         }
     }
 
-    private async Task<ResultadoCriacaoPedido> CriarEmTransacaoAsync(
-        IReadOnlyList<ItemSolicitado> itens,
-        Func<IReadOnlyCollection<Produto>, ResultadoCriacaoPedido> decidir,
-        CancellationToken cancellationToken)
+    private async Task<ResultadoCriacaoPedido> CriarEmTransacaoAsync(IReadOnlyList<ItemSolicitado> itens,
+        Func<IReadOnlyCollection<Produto>, ResultadoCriacaoPedido> decidir, CancellationToken cancellationToken)
     {
         var produtoIds = itens.Select(i => i.ProdutoId).ToList();
 
