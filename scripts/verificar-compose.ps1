@@ -145,7 +145,7 @@ catch {
 Write-Host ''
 if ($script:falhas.Count -eq 0) {
     Write-Host 'Verificacao do Compose concluida: tudo OK.' -ForegroundColor Green
-    Write-Host "O ambiente continua no ar em $base. Para parar: docker compose down  (use -v só se quiser apagar o banco)."
+    Write-Host "O ambiente continua no ar em $base. Para parar: docker compose down  (use -v so se quiser apagar o banco)."
     exit 0
 }
 
