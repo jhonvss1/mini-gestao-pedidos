@@ -39,6 +39,12 @@ Custo aproximado (estimativa, confira na calculadora da AWS): instância `t3.med
 
 ## 3. Preparar o servidor
 
+Logo ao conectar, **confira a memória**: o SQL Server em container não inicia com menos de 2000 MB. Uma instância de 4 GiB mostra cerca de 3800 em `total`; se aparecer por volta de 900, a instância saiu com um tipo menor que o escolhido (por exemplo `t3.micro`) e é preciso trocar o tipo antes de continuar (*Interromper → Ações → Configurações da instância → Alterar o tipo de instância → Iniciar*).
+
+```bash
+free -m
+```
+
 Conecte pelo **Session Manager** (console da AWS, botão *Connect*). No servidor:
 
 ```bash
