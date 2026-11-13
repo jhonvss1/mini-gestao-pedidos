@@ -8,14 +8,14 @@
 | # | Ponto | Tensão | Resolução proposta |
 |---|---|---|---|
 | 0.1 | Application depende só de Domain, mas a transação e o débito de estoque precisam envolver a **decisão de domínio** | Se a transação fica em Infrastructure, a regra de estoque precisa rodar *dentro* dela; se a regra fica em Application, a transação fica fora | Uma porta única definida em Application, cuja implementação (Infrastructure) abre a transação, lê o snapshot dos produtos, **invoca a decisão de domínio recebida como função** e aplica o débito atômico. Ver 2.2 (PD-1) |
-| 0.2 | "Domínio protege estoque" × "Infrastructure protege estoque concorrente" | Com `UPDATE ... WHERE Estoque >= @q` (decisão do autor), a mesma comparação existe no domínio e no SQL | **Duplicação assumida conscientemente:** o Domain avalia a regra sobre um snapshot (decisão, preço, total e mensagens completas da RN-11) e devolve as **baixas de estoque** a aplicar, sem mutar o saldo em memória; o predicado `Estoque >= @q` do UPDATE é a **garantia atômica** sob concorrência, responsabilidade da Infrastructure. É uma comparação, com papéis distintos |
+| 0.2 | "Domínio protege estoque" × "Infrastructure protege estoque concorrente" | Com `UPDATE ... WHERE estoque >= @q` (decisão do autor), a mesma comparação existe no domínio e no SQL | **Duplicação assumida conscientemente:** o Domain avalia a regra sobre um snapshot (decisão, preço, total e mensagens completas da RN-11) e devolve as **baixas de estoque** a aplicar, sem mutar o saldo em memória; o predicado `estoque >= @q` do UPDATE é a **garantia atômica** sob concorrência, responsabilidade da Infrastructure. É uma comparação, com papéis distintos |
 | 0.3 | Domain "independente de EF" × entidades ricas persistidas por EF | Setters privados, coleção encapsulada, construtor sem parâmetros | Mapeamento Fluent em Infrastructure (campos de apoio, construtores privados); **sem modelo de persistência separado**. O domínio mantém apenas construtores privados vazios, sem atributos de EF |
 | 0.4 | RN-11 (mensagens agregadas por etapa, com caminhos `itens[i].quantidade`) × invariantes protegidas pelo domínio | A validação detalhada é de entrada; o domínio não conhece caminhos HTTP | `ValidadorCriarPedido` (Application) produz os erros agregados da etapa 1; o domínio mantém **guardas** (exceção em estado inválido, inalcançáveis no fluxo normal). Pequena duplicação de regras simples, coberta por testes nos dois níveis |
 | 0.5 | Sem interfaces por convenção × NSubstitute exigido pela spec | NSubstitute precisa de fronteiras substituíveis | Apenas **duas interfaces**, com necessidade concreta (isolar EF das camadas internas e testar a orquestração sem banco) + `TimeProvider` (já existente no .NET). Casos de uso são classes concretas injetadas direto nos controllers |
 | 0.6 | Spec exige .NET 10; **SDK 10 não está instalado** | `global.json` não pode fixar SDK 10; SDK 11 compila `net10.0` mas diverge das imagens Docker (`sdk:10.0`) | Pré-requisito do E1: instalar o SDK 10 (recomendado). Plano B: usar SDK 11 com `TargetFramework net10.0` e `rollForward` no `global.json` (PD-7) |
 | 0.7 | `[ApiController]` devolve `400` com formato próprio e trata ausente × tipo errado de modo diferente do exigido (RN-11, CA-03) | Formato de erro divergente da spec (`codigo`, Problem Details) | `InvalidModelStateResponseFactory` customizado, DTO com campos anuláveis (`int?`): ausente → `422`, tipo errado → `400 REQUISICAO_INVALIDA` |
 | 0.8 | Caminho dos scripts: spec cita `db/` "ou caminho definido no plano"; indicado pelo autor: `database/` | Diferença de nome | Plano usa `database/`; sem mudança de comportamento na spec. Ajuste textual opcional de `db/` para `database/` em commit separado |
-| 0.9 | Spec 3.2 lista índice `ItensPedido(PedidoId)` | A constraint única `(PedidoId, ProdutoId)` já oferece esse prefixo de índice | Índice dedicado dispensado (hipótese a confirmar por plano de execução). Ver 2.7 |
+| 0.9 | Spec 3.2 lista índice `item_pedido(pedido_id)` | A constraint única `(pedido_id, produto_id)` já oferece esse prefixo de índice | Índice dedicado dispensado (hipótese a confirmar por plano de execução). Ver 2.7 |
 | 0.10 | MCP "oficial" para SQL Server | O SQL MCP Server da Microsoft (Data API builder) **não executa SQL arbitrário nem expõe planos/estatísticas** | Serve para inspeção de dados somente leitura; a investigação de desempenho usa `sqlcmd`. Ver 6.4 |
 | 0.11 | Query do enunciado indisponível | Não é possível apontar erros reais nem medir | Seção 7 traz **só o método**; análise fica pendente até a query ser fornecida (etapa E21) |
 | 0.12 | Modelo de resposta: serviço que acumula erros × contrato HTTP da spec | Um acumulador genérico não deve vazar para Domain nem alterar os corpos de erro já especificados | `Resultado` único em **Application** (tipo + lista de erros), traduzido pela **Api** para o Problem Details da spec 4.1, sem mudar o contrato. Domain mantém resultados tipados próprios. Ver 2.6 (PD-15) |
@@ -133,28 +133,30 @@ Controller ── contrato (campos anuláveis; 400 se corpo/tipos inválidos)
 |---|---|---|
 | A | Ler cada produto com `WITH (UPDLOCK, ROWLOCK)`, uma consulta por produto em ordem crescente de `Id`; o domínio decide sobre o estado bloqueado | Determinístico e regra 100% no domínio; porém segura locks da leitura ao commit e faz mais idas ao banco |
 | B | Otimista com `rowversion` + retry | Exige coluna extra (muda a spec 3.2); sob 20 requisições simultâneas no mesmo produto (CA-14) gera ondas de retries; esgotar tentativas viraria `5xx`, violando RN-08 |
-| **C (escolhida pelo autor)** | `UPDATE Produtos SET Estoque = Estoque - @q WHERE Id = @id AND Estoque >= @q`, em ordem crescente de `Id`; 0 linhas afetadas = perdeu a disputa | Atômico, sem retry de conflito, sem mudar o schema, locks só durante o débito até o commit; a comparação `Estoque >= q` também aparece no SQL (aceito, ver 0.2); mensagens completas da RN-11 exigem nova leitura após a falha |
+| **C (escolhida pelo autor)** | `UPDATE produto SET estoque = estoque - @q WHERE id = @id AND estoque >= @q`, em ordem crescente de `id`; 0 linhas afetadas = perdeu a disputa | Atômico, sem retry de conflito, sem mudar o schema, locks só durante o débito até o commit; a comparação `estoque >= q` também aparece no SQL (aceito, ver 0.2); mensagens completas da RN-11 exigem nova leitura após a falha |
 | D | `SERIALIZABLE` ou `sp_getapplock` | `SERIALIZABLE` aumenta deadlocks por range locks; `sp_getapplock` equivale a A com mais um mecanismo |
 
 **Como C funciona (afirmações a comprovar pelos testes, não pressupostos):**
 1. Dentro de uma transação explícita (`READ COMMITTED`, `Database.BeginTransactionAsync`), Infrastructure lê um **snapshot** dos produtos (`AsNoTracking`, sem locks de atualização) e chama `decidir`.
 2. Se o domínio falhar (404/422/409), a transação é descartada sem escrever nada.
-3. Se o domínio devolver `Criado`, para cada baixa, **em ordem crescente de `Id`**, executa o UPDATE condicional (`ExecuteSqlInterpolatedAsync`, na mesma transação). Predicado e débito são uma única instrução atômica: duas transações nunca debitam o mesmo saldo, e a segunda espera o commit ou rollback da primeira antes de reavaliar `Estoque >= @q`.
+3. Se o domínio devolver `Criado`, para cada baixa, **em ordem crescente de `Id`**, executa o UPDATE condicional (`ExecuteSqlInterpolatedAsync`, na mesma transação). Predicado e débito são uma única instrução atômica: duas transações nunca debitam o mesmo saldo, e a segunda espera o commit ou rollback da primeira antes de reavaliar `estoque >= @q`.
 4. **0 linhas afetadas** = o saldo comprometido já não comporta a baixa. Rollback de tudo (inclusive débitos anteriores do mesmo pedido, CA-09), nova leitura do snapshot e nova decisão do domínio, que agora enxerga o saldo real e devolve `409` com **todos** os produtos afetados e o `disponivel` atual (RN-11). No máximo 3 tentativas por requisição; esgotadas, devolve `409` com o último snapshot, de modo que contenção nunca gera `5xx` (RN-08). Como o saldo só diminui no escopo, a segunda leitura confirma a falta na prática.
-5. Todas as baixas aplicadas: insere `Pedido` e `ItensPedido` (preço do snapshot, `ValorTotal` somado) via EF, `SaveChanges` e commit. Falha em qualquer ponto antes do commit reverte pedido, itens e débitos (RN-07).
+5. Todas as baixas aplicadas: insere `pedido` e `item_pedido` (preço do snapshot, `ValorTotal` somado) via EF, `SaveChanges` e commit. Falha em qualquer ponto antes do commit reverte pedido, itens e débitos (RN-07).
 6. `EnableRetryOnFailure` **não** é usado (conflita com transações explícitas e esconde falhas).
 
 **Deadlocks e conflitos:**
 - Conflito de estoque **não é exceção nem deadlock**: é o resultado de 0 linhas afetadas, tratado no fluxo.
 - A ordem crescente de `Id` na aplicação dos UPDATEs impede ciclos de espera entre pedidos com os mesmos produtos em ordens diferentes (CA-16). Não há leitura seguida de escrita sob lock (sem conversão S→X) e o snapshot não segura locks de atualização.
 - **Defesa em profundidade:** erro 1205 (vítima de deadlock) repete a transação, no máximo 3 vezes; esgotadas, `500`. Não deve ocorrer; o CA-16 em laço é a evidência. A função de domínio é pura sobre o snapshot recebido, logo reexecutável (PD-3).
-- `CHECK (Estoque >= 0)` é a **última barreira**: violação (erro 547) indica defeito e vira `500`.
+- `CHECK (estoque >= 0)` é a **última barreira**: violação (erro 547) indica defeito e vira `500`.
 - **Preço:** vem do snapshot lido dentro da mesma transação (RN-04). Alteração de preço *durante* a criação está fora do escopo (nenhum endpoint a faz); fica registrado como limitação conhecida.
 - Risco residual: carga muito acima da dos testes pode estourar o timeout de comando enquanto espera lock; registrado no README.
 
 ### 2.3 Mapeamento EF Core compatível com `database/`
-- Tabelas e colunas com os nomes exatos dos scripts (`Clientes`, `Produtos`, `Pedidos`, `ItensPedido`). **Sem migrations e sem `EnsureCreated`**: o schema vem só dos scripts.
-- `HasPrecision(18,2)` em `Preco`, `PrecoUnitario`, `ValorTotal`; `datetime2(0)` em `DataCriacao` com conversor que marca `DateTimeKind.Utc` na leitura (serialização com `Z`).
+- **Convenção de nomes (spec D-19):** tabelas no singular e colunas em snake_case (`cliente`, `produto`, `pedido`, `item_pedido`; `cliente_id`, `data_criacao`, `valor_total`, `preco_unitario`...); restrições e índices no mesmo padrão. As propriedades C# seguem em PascalCase.
+- A tradução é **explícita** no mapeamento Fluent (`ToTable("item_pedido")`, `HasColumnName("data_criacao")`...), sem pacote de convenção de nomes (PD-16): são 4 tabelas e o teste de deriva de schema cobre qualquer divergência. O SQL escrito à mão (UPDATE condicional, consultas) usa os nomes do banco.
+- Tabelas e colunas com os nomes exatos dos scripts. **Sem migrations e sem `EnsureCreated`**: o schema vem só dos scripts.
+- `HasPrecision(18,2)` em `Preco`, `PrecoUnitario`, `ValorTotal` (colunas `preco`, `preco_unitario`, `valor_total`); `datetime2(0)` em `DataCriacao` (`data_criacao`) com conversor que marca `DateTimeKind.Utc` na leitura (serialização com `Z`).
 - Agregado: `Pedido` → `Itens` por campo de apoio e `IReadOnlyCollection`; referências a cliente e produto **por id** (sem propriedades de navegação entre agregados); consultas usam `join` explícito.
 - **Teste de deriva de schema** (integração): compara o modelo do EF (tabelas, colunas, tipos, precisão) com `INFORMATION_SCHEMA` do banco criado pelos scripts. Falha se um dos lados mudar sozinho.
 
@@ -166,7 +168,7 @@ Controller ── contrato (campos anuláveis; 400 se corpo/tipos inválidos)
 - OFFSET profundo é aceitável no escopo (paginação por número de página é requisito).
 
 ### 2.5 Ranking (top-clientes)
-Agrega primeiro, une depois: `GROUP BY ClienteId` → `SUM(ValorTotal)` → `ORDER BY total DESC, ClienteId ASC` → `TOP 5` → junção com `Clientes` só para as 5 linhas (RN-18 a RN-21, agrupa por id, nunca por nome).
+Agrega primeiro, une depois: `GROUP BY cliente_id` → `SUM(valor_total)` → `ORDER BY total DESC, cliente_id ASC` → `TOP 5` → junção com `cliente` só para as 5 linhas (RN-18 a RN-21, agrupa por id, nunca por nome).
 
 ### 2.6 Resultado único e padronização de erros
 **Application** devolve sempre um `Resultado` (ou `Resultado<T>`): `Tipo` (`Sucesso | RequisicaoInvalida | Validacao | NaoEncontrado | Conflito`) e lista de `Erro` (`Codigo`, `Campo?`, `Mensagem`, `Dados?`). É o padrão de notificação (acumula erros por etapa, RN-11) **sem biblioteca**. Ele não vai para o Domain, que mantém resultados tipados próprios; Application faz a tradução.
@@ -190,11 +192,11 @@ Mensagens descritivas em português, centralizadas numa classe (identificam camp
 
 | Índice | Colunas | Atende | Observação |
 |---|---|---|---|
-| PK clustered | `Id` em cada tabela | junções e buscas por id | — |
-| `IX_Pedidos_DataCriacao_Id` | `(DataCriacao DESC, Id DESC)` `INCLUDE (ClienteId, ValorTotal)` | `GET /pedidos` sem cliente (faixa + ordem estável); **ranking** por período (cobre a agregação sem acessar a tabela) | cobre RN-16 e RN-18 |
-| `IX_Pedidos_ClienteId_DataCriacao_Id` | `(ClienteId, DataCriacao DESC, Id DESC)` `INCLUDE (ValorTotal)` | `GET /pedidos?clienteId=` com ou sem período | também serve à FK `ClienteId` |
-| `UQ_ItensPedido_Pedido_Produto` | `(PedidoId, ProdutoId)` | integridade RN-09; busca dos itens por `PedidoId` na página | substitui o `IX_ItensPedido_PedidoId` da spec 3.2 |
-| FK `ItensPedido.ProdutoId` | sem índice dedicado | — | não há exclusão de produtos; **hipótese**, a confirmar pelo plano |
+| `pk_<tabela>` (clustered) | `id` em cada tabela | junções e buscas por id | — |
+| `ix_pedido_data_criacao_id` | `(data_criacao DESC, id DESC)` `INCLUDE (cliente_id, valor_total)` | `GET /pedidos` sem cliente (faixa + ordem estável); **ranking** por período (cobre a agregação sem acessar a tabela) | cobre RN-16 e RN-18 |
+| `ix_pedido_cliente_id_data_criacao_id` | `(cliente_id, data_criacao DESC, id DESC)` `INCLUDE (valor_total)` | `GET /pedidos?clienteId=` com ou sem período | também serve à FK `cliente_id` |
+| `uq_item_pedido_pedido_id_produto_id` | `(pedido_id, produto_id)` | integridade RN-09; busca dos itens por `pedido_id` na página | substitui o `ix_item_pedido_pedido_id` da spec 3.2 |
+| FK `item_pedido.produto_id` | sem índice dedicado | — | não há exclusão de produtos; **hipótese**, a confirmar pelo plano |
 
 Estes índices são **hipóteses de projeto**: justificados por raciocínio sobre as consultas, ainda **sem medição**. A confirmação (planos de execução e leituras lógicas, com e sem índice, em base com volume) está na seção 7 e no E21. Custo conhecido: três índices a manter em cada `INSERT` de pedido.
 
@@ -245,7 +247,7 @@ frontend/src/app/
 
 ### 4.3 Concorrência e rollback
 - **Rollback (CA-13):** `SaveChangesInterceptor` de teste, registrado pelo ponto de extensão de interceptors da Infrastructure via `ConfigureTestServices`, lança exceção ao gravar os itens (depois do débito, antes do commit). Verifica estoque, pedidos e itens inalterados.
-- **Concorrência (CA-14 a CA-16):** `Task.WhenAll` com barreira de largada sobre chamadas HTTP reais; asserções sobre contagem de `201`/`409`, ausência de `5xx`, estoque final e soma em `ItensPedido`. CA-16 usa ordens opostas de produtos e é **repetido em laço** (ex.: 20 rodadas) para expor deadlocks. Um teste adicional desliga o retry para provar que a ordenação sozinha evita deadlock.
+- **Concorrência (CA-14 a CA-16):** `Task.WhenAll` com barreira de largada sobre chamadas HTTP reais; asserções sobre contagem de `201`/`409`, ausência de `5xx`, estoque final e soma em `item_pedido`. CA-16 usa ordens opostas de produtos e é **repetido em laço** (ex.: 20 rodadas) para expor deadlocks. Um teste adicional desliga o retry para provar que a ordenação sozinha evita deadlock.
 - **Perda de disputa com vários produtos:** dois pedidos de 2 produtos em ordens opostas e estoque para apenas um; o perdedor recebe `409` com o produto em falta e o débito do **primeiro** produto é revertido (CA-09 sob concorrência).
 - Convenção de rastreio: cada teste recebe `[Trait("CA", "CA-14")]`, base para a skill `verificar-ca` (6.3).
 
@@ -286,7 +288,7 @@ frontend/src/app/
 ### 6.1 `CLAUDE.md` (conteúdo previsto, curto)
 1. Visão: sistema, link para `docs/spec.md` e `docs/plan.md`; numeração RN/CA como fonte de verdade.
 2. Arquitetura: quatro projetos e direção das dependências; **proibido** MediatR, barramento de eventos, repositório genérico, Unit of Work próprio, CQRS formal, interfaces sem necessidade concreta; só duas portas em Application.
-3. Regras de ouro: preço vem do cadastro; estoque nunca negativo; criação em uma transação; débito de estoque por UPDATE condicional (`Estoque >= @q`) em ordem crescente de `Id`; dinheiro sempre `decimal`; `DataCriacao` truncada em segundos.
+3. Regras de ouro: preço vem do cadastro; estoque nunca negativo; criação em uma transação; débito de estoque por UPDATE condicional (`estoque >= @q`) em ordem crescente de `Id`; dinheiro sempre `decimal`; `DataCriacao` truncada em segundos.
 4. Comandos: `dotnet build`, `dotnet test --filter`, `docker compose up --build`, `scripts/verificar-compose.ps1`.
 5. Testes: integração **sempre contra SQL Server real** (nunca in-memory/SQLite); todo teste de critério leva `[Trait("CA","CA-xx")]`.
 6. Banco: scripts em `database/` são a fonte do schema; sem migrations; idempotentes.
@@ -316,7 +318,7 @@ frontend/src/app/
 - **Configuração proposta:**
   1. DAB como ferramenta local do repositório (`dotnet new tool-manifest` + `dotnet tool install microsoft.dataapibuilder`, versão fixada).
   2. `dab init --database-type mssql` com `@env('MSSQL_CONNECTION_STRING')`, `dab-config.json` em `tools/sql-mcp/` (versionado, **sem segredo**), host em desenvolvimento, ligado só em `localhost`.
-  3. `dab add` para `Clientes`, `Produtos`, `Pedidos`, `ItensPedido` com permissão `anonymous:read` apenas, e descrições de campos (a documentação avisa que sem elas o agente adivinha nomes de colunas).
+  3. `dab add` para `cliente`, `produto`, `pedido`, `item_pedido` com permissão `anonymous:read` apenas, e descrições de campos (a documentação avisa que sem elas o agente adivinha nomes de colunas).
   4. Desligar em `runtime.mcp.dml-tools`: `create-record`, `update-record`, `delete-record`, `execute-entity` (defesa em profundidade).
   5. Cliente MCP no Claude Code: transporte HTTP (`http://localhost:5000/mcp`, caminho `/mcp`) ou stdio (`dab start --mcp-stdio role:anonymous`), registrado em `.mcp.json` de escopo de projeto. **A sintaxe exata do `claude mcp add` e do `.mcp.json` será conferida na documentação do Claude Code no momento da configuração** (a documentação do DAB mostra exemplos para VS Code e Claude Desktop, não para Claude Code).
 - **Credenciais:** login SQL dedicado `mcp_reader`, apenas `db_datareader`, criado por script de desenvolvimento em `database/dev/` e **fora** da carga do Compose padrão; senha só no `.env` (ignorado pelo git). Nunca usar o login `sa`.
@@ -335,20 +337,20 @@ frontend/src/app/
 `docs/investigacao-query.md` terá duas tabelas: **Hipóteses** (texto, como testar) e **Evidências** (saída bruta em `database/investigacao/resultados/`, números copiados dela). Conclusão só entra em "Evidências" com a medição anexada.
 
 ### 7.2 Checklist de hipóteses a verificar quando a query existir (não são achados)
-- **Resultado:** junção com `ItensPedido` multiplicando linhas antes de `SUM` do valor do pedido; agrupamento por nome (homônimos, RN-19); `BETWEEN` com `datetime` excluindo parte do último dia; `TOP` sem desempate; `DISTINCT` escondendo duplicidade; tratamento de `NULL`; nome `DataPedido` × `DataCriacao`.
+- **Resultado:** junção com `item_pedido` multiplicando linhas antes de `SUM` do valor do pedido; agrupamento por nome (homônimos, RN-19); `BETWEEN` com `datetime` excluindo parte do último dia; `TOP` sem desempate; `DISTINCT` escondendo duplicidade; tratamento de `NULL`; nome `DataPedido` × `DataCriacao`.
 - **Desempenho:** função sobre coluna filtrada (ex.: conversão de data) impedindo `Seek`; subconsulta correlacionada; `SELECT *`; ausência de índice de apoio; ordenação sem índice; conversões implícitas.
 
 ### 7.3 Dados
 Seed pequeno (correção) + `database/investigacao/gerar-volume.sql` (geração em conjunto, determinística, base separada `PedidosVolume`, ordem de grandeza a definir, p. ex. centenas de milhares de pedidos). Nunca incluída nos testes nem no Compose padrão.
 
 ### 7.4 Comparar resultados
-Executar original e corrigida no seed e no volume; comparar com `EXCEPT` nos dois sentidos, contagem de linhas e `CHECKSUM_AGG`; recalcular o total por uma consulta independente (`SUM(Quantidade * PrecoUnitario)` sobre `ItensPedido`) para expor multiplicação de linhas. Toda diferença entre original e corrigida precisa ser explicada linha a linha.
+Executar original e corrigida no seed e no volume; comparar com `EXCEPT` nos dois sentidos, contagem de linhas e `CHECKSUM_AGG`; recalcular o total por uma consulta independente (`SUM(quantidade * preco_unitario)` sobre `item_pedido`) para expor multiplicação de linhas. Toda diferença entre original e corrigida precisa ser explicada linha a linha.
 
 ### 7.5 Comparar desempenho
 `SET STATISTICS IO, TIME ON` e plano de execução **real** (`SET STATISTICS XML ON` ou plano real no cliente); registrar leituras lógicas, CPU, tempo, operadores (scan × seek, key lookup, spill de sort, linhas estimadas × reais). Cinco execuções com cache aquecido; execução a frio (`CHECKPOINT` + `DBCC DROPCLEANBUFFERS`) **somente** no banco local de desenvolvimento. Comparar antes e depois de cada índice com os mesmos dados; dicas `WITH (INDEX(...))` só para diagnóstico. Ferramenta: `sqlcmd` em `docker compose exec` (o MCP do DAB não fornece estas medições).
 
 ### 7.6 Correção e índices
-A consulta corrigida usará o modelo do plano (agregar por `ClienteId`, filtro por faixa sobre `DataCriacao`, desempate determinístico). Índices candidatos já listados em 2.7; mantidos, alterados ou removidos conforme as **evidências**. O README registra a correspondência `DataPedido` ↔ `DataCriacao`.
+A consulta corrigida usará o modelo do plano (agregar por `cliente_id`, filtro por faixa sobre `data_criacao`, desempate determinístico). Índices candidatos já listados em 2.7; mantidos, alterados ou removidos conforme as **evidências**. O README registra a correspondência `DataPedido` ↔ `DataCriacao`.
 
 ---
 
@@ -379,7 +381,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | E18 | `README.md` (execução, testes, Compose, roteiros, risco residual, `DataPedido`↔`DataCriacao`) | seguir o README do zero | `docs: adiciona README` |
 | — | **Fim dos obrigatórios** | todos os CA obrigatórios cobertos | — |
 | E19 | Skill `verificar-ca` + traits nos testes existentes | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
-| E20 | MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `Pedidos`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
+| E20 | MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
 | E21 | Investigação da query (**depende da query do enunciado**): volume, comparação, planos, índices | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
 | E22 | (Opcional) testes de frontend e revisão final do plano | — | `test(frontend): ...` / `docs: atualiza plano` |
 
@@ -404,6 +406,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | PD-13 | Testes de frontend | só roteiro manual; testes de componente | **Roteiro manual** (spec não pede automatizados) | Regressões visuais não detectadas |
 | PD-14 | Índices | conjunto da 2.7; adiar até medir | **Criar o conjunto mínimo** e revisar com evidências (E21) | Sem medição, são hipóteses |
 | PD-15 | Modelo de resposta | resultado único + contrato da spec; contrato unificado `erros[]` (altera a spec 4.1); tipos de falha distintos | **Resultado único + contrato da spec (decidido pelo autor)**: notificação acumulada em Application, spec intacta; no frontend, serviço de erros por tela | Mapeamento extra na Api; `Dados` do erro exige convenção por código |
+| PD-16 | Tradução dos nomes do banco (snake_case, singular) | Mapeamento Fluent explícito; pacote `EFCore.NamingConventions` | **Explícito**: 4 tabelas, sem dependência extra, e o teste de deriva de schema detecta divergência | Mais linhas de configuração; esquecer uma coluna é pego pelo teste |
 
 ### Revisão humana
 
