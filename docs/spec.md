@@ -20,7 +20,7 @@ Aplicação de mini gestão de pedidos que permite registrar pedidos de clientes
 | Banco (scripts) | Scripts SQL de criação do schema e de carga inicial |
 
 ### 1.3 Dentro do escopo
-- Entidades Clientes, Produtos, Pedidos, ItensPedido.
+- Entidades Cliente, Produto, Pedido e ItemPedido (tabelas `cliente`, `produto`, `pedido` e `item_pedido`).
 - `POST /pedidos`, `GET /pedidos`, `GET /relatorios/top-clientes`.
 - Endpoints auxiliares de leitura `GET /clientes` e `GET /produtos` (somente para alimentar o frontend) **[D-5]**.
 - Frontend com listagem de pedidos, filtros e criação de pedido.
@@ -78,47 +78,49 @@ Autenticação/autorização; CRUD de clientes e produtos; edição, cancelament
 
 ### 3.1 Relacionamentos
 ```
-Clientes 1 ──< Pedidos 1 ──< ItensPedido >── 1 Produtos
+cliente 1 ──< pedido 1 ──< item_pedido >── 1 produto
 ```
 
 ### 3.2 Tabelas
 
-**Clientes**
+**Convenção de nomes do banco [D-19]:** tabelas no **singular** e colunas em **snake_case** (palavras separadas por `_`), em minúsculas; restrições e índices seguem o mesmo padrão. Fora do banco, os atributos mantêm o nome lógico em PascalCase (`DataCriacao`, `ValorTotal`, usado nas regras e critérios desta spec) e os campos JSON ficam em `camelCase`; a tradução para as colunas é feita no mapeamento. Correspondência: `Id`→`id`, `Nome`→`nome`, `Preco`→`preco`, `Estoque`→`estoque`, `ClienteId`→`cliente_id`, `DataCriacao`→`data_criacao`, `ValorTotal`→`valor_total`, `PedidoId`→`pedido_id`, `ProdutoId`→`produto_id`, `Quantidade`→`quantidade`, `PrecoUnitario`→`preco_unitario`.
+
+**cliente**
 | Coluna | Tipo | Regras |
 |---|---|---|
-| Id | int identity | PK **[D-6]** |
-| Nome | nvarchar(200) | NOT NULL. **Não único** (homônimos permitidos) **[D-13]** |
+| id | int identity | PK **[D-6]** |
+| nome | nvarchar(200) | NOT NULL. **Não único** (homônimos permitidos) **[D-13]** |
 
-**Produtos**
+**produto**
 | Coluna | Tipo | Regras |
 |---|---|---|
-| Id | int identity | PK |
-| Nome | nvarchar(200) | NOT NULL |
-| Preco | decimal(18,2) | NOT NULL, CHECK `> 0` |
-| Estoque | int | NOT NULL, CHECK `>= 0` |
+| id | int identity | PK |
+| nome | nvarchar(200) | NOT NULL |
+| preco | decimal(18,2) | NOT NULL, CHECK `> 0` |
+| estoque | int | NOT NULL, CHECK `>= 0` |
 
-**Pedidos**
+**pedido**
 | Coluna | Tipo | Regras |
 |---|---|---|
-| Id | int identity | PK |
-| ClienteId | int | NOT NULL, FK → Clientes(Id) |
-| DataCriacao | datetime2(0) | NOT NULL, UTC, definida pelo servidor |
-| ValorTotal | decimal(18,2) | NOT NULL, = soma dos subtotais **[D-7]** |
+| id | int identity | PK |
+| cliente_id | int | NOT NULL, FK → cliente(id) |
+| data_criacao | datetime2(0) | NOT NULL, UTC, definida pelo servidor |
+| valor_total | decimal(18,2) | NOT NULL, = soma dos subtotais **[D-7]** |
 
-**ItensPedido**
+**item_pedido**
 | Coluna | Tipo | Regras |
 |---|---|---|
-| Id | int identity | PK |
-| PedidoId | int | NOT NULL, FK → Pedidos(Id) |
-| ProdutoId | int | NOT NULL, FK → Produtos(Id) |
-| Quantidade | int | NOT NULL, CHECK `> 0` |
-| PrecoUnitario | decimal(18,2) | NOT NULL, CHECK `> 0`, cópia do preço no momento da compra |
+| id | int identity | PK |
+| pedido_id | int | NOT NULL, FK → pedido(id) |
+| produto_id | int | NOT NULL, FK → produto(id) |
+| quantidade | int | NOT NULL, CHECK `> 0` |
+| preco_unitario | decimal(18,2) | NOT NULL, CHECK `> 0`, cópia do preço no momento da compra |
 
-Restrições: UNIQUE (`PedidoId`, `ProdutoId`) (reflete RN-09). Subtotal não é armazenado (derivado). FKs restritivas, sem exclusão em cascata de Produtos/Clientes com pedidos.
+Restrições: UNIQUE (`pedido_id`, `produto_id`) (reflete RN-09). Subtotal não é armazenado (derivado). FKs restritivas, sem exclusão em cascata de `produto`/`cliente` com pedidos.
 
-Índices exigidos pelos filtros/ordenação (definição exata no plano): `Pedidos(ClienteId, DataCriacao)`, `Pedidos(DataCriacao, Id)` e `ItensPedido(PedidoId)`.
+Índices exigidos pelos filtros/ordenação (definição exata no plano): `pedido(cliente_id, data_criacao)`, `pedido(data_criacao, id)` e `item_pedido(pedido_id)`.
 
-Nomenclatura: o enunciado do teste usa `DataPedido`; esta especificação adota `DataCriacao` **[D-17]**. O README deve registrar essa correspondência ao apresentar a query corrigida.
+Nomenclatura: o enunciado do teste usa `DataPedido`; esta especificação adota o atributo `DataCriacao` (coluna `data_criacao`) **[D-17]**. O README deve registrar essa correspondência ao apresentar a query corrigida.
 
 ### 3.3 Scripts SQL
 - Em `database/`: `01-schema.sql` (tabelas, FKs, CHECKs, índices) e `02-seed.sql` (carga inicial).
@@ -352,7 +354,7 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | CA-33 | `docker compose up` em ambiente limpo sobe banco, API e frontend; schema e carga inicial aplicados sem passos manuais. Validado separadamente dos testes automatizados, por procedimento reproduzível registrado no README. |
 | CA-34 | Reexecutar `01-schema.sql` e `02-seed.sql` não falha nem duplica dados. |
 | CA-35 | Carga inicial atende os mínimos da seção 3.3 (conferível por consultas SQL). |
-| CA-36 | Tentativas diretas de gravar `Estoque < 0`, `Quantidade ≤ 0`, `Preco ≤ 0` ou item duplicado no mesmo pedido são rejeitadas pelo banco. |
+| CA-36 | Tentativas diretas de gravar `produto.estoque < 0`, `item_pedido.quantidade ≤ 0`, `produto.preco ≤ 0` ou item duplicado no mesmo pedido são rejeitadas pelo banco. |
 | CA-37 | Colunas monetárias são `decimal(18,2)` (verificável via metadados do schema). |
 
 ### Frontend
@@ -374,13 +376,13 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 
 | # | Decisão | Resolução | Justificativa |
 |---|---|---|---|
-| D-1 | Produto repetido no pedido | Consolidar (somar quantidades) | Não é inválido em si; mantém UNIQUE (PedidoId, ProdutoId) e valida estoque pela soma. |
+| D-1 | Produto repetido no pedido | Consolidar (somar quantidades) | Não é inválido em si; mantém UNIQUE (`pedido_id`, `produto_id`) e valida estoque pela soma. |
 | D-2 | Códigos HTTP e erro | `400` malformada, `422` semanticamente inválida, `404` cliente/produto inexistente, `409` estoque; Problem Details + `codigo` | Cada código tem significado único; `codigo` evita depender de texto. |
 | D-3 | Semântica do período | Datas sem horário, inclusivas, UTC | Evita que `dataFim` exclua o próprio dia. |
 | D-4 | Período no relatório | Obrigatório | "No período" implica período definido. |
 | D-5 | `GET /clientes` e `GET /produtos` | Incluídos, somente leitura | Necessários ao frontend para seletores. |
 | D-6 | Tipo de id | `int identity` | Suficiente ao escopo. |
-| D-7 | `ValorTotal` em Pedidos | Persistido | Fixa o total da venda; simplifica listagem e ranking. |
+| D-7 | `ValorTotal` (`valor_total`) em `pedido` | Persistido | Fixa o total da venda; simplifica listagem e ranking. |
 | D-8 | `clienteId` inexistente no filtro | `200` com lista vazia | É filtro, não recurso. |
 | D-9 | Paginação | Padrão 20, máximo 100, página 1-based, além do fim → `200` vazio | Convencional; teto protege a API. |
 | D-10 | Campos do ranking | `clienteId`, `nome`, `valorTotal` | Mínimo que distingue homônimos. |
@@ -390,5 +392,6 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | D-14 | Tela do top-clientes | Fora do escopo | Frontend pedido cita só listagem, filtros e criação. |
 | D-15 | Validação do `POST /pedidos` | Em etapas, interrompendo na primeira com falhas e agrupando os erros dela | Mensagens mais descritivas e comportamento previsível. |
 | D-16 | Garantias de atomicidade | Restritas à própria requisição antes do commit; `5xx`/falha de comunicação sem garantia | Outras requisições concorrentes alteram o banco, `identity` pode ter lacunas e a conexão pode cair após o commit. |
-| D-17 | `DataPedido` vs `DataCriacao` | Mantido `DataCriacao`, com correspondência registrada no README | Escolha do modelo; evita ambiguidade para quem compara com o enunciado. |
+| D-17 | `DataPedido` vs `DataCriacao` | Mantido `DataCriacao` (coluna `data_criacao`), com correspondência registrada no README | Escolha do modelo; evita ambiguidade para quem compara com o enunciado. |
 | D-18 | Criação com filtros ativos | Limpar filtros, voltar à página 1 e atualizar | Garante que o pedido criado fique visível. |
+| D-19 | Nomes no banco | Tabelas no singular e colunas em snake_case (`cliente`, `produto`, `pedido`, `item_pedido`; `data_criacao`, `valor_total`...) | Padrão definido pelo autor; atributos em PascalCase e JSON em camelCase são traduzidos no mapeamento. |
