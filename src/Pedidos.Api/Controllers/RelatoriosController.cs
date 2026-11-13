@@ -8,7 +8,7 @@ using Pedidos.Application.Modelos;
 namespace Pedidos.Api.Controllers;
 
 [ApiController]
-[Route("relatorios")]
+[Route("api/[controller]")]
 public class RelatoriosController(ObterTopClientes obterTopClientes) : ControllerBase
 {
     [HttpGet("top-clientes")]

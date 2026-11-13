@@ -9,7 +9,7 @@ using Pedidos.Application.Modelos;
 namespace Pedidos.Api.Controllers;
 
 [ApiController]
-[Route("pedidos")]
+[Route("api/[controller]")]
 public class PedidosController(CriarPedido criarPedido, ListarPedidos listarPedidos) : ControllerBase
 {
     [HttpGet]
@@ -29,7 +29,6 @@ public class PedidosController(CriarPedido criarPedido, ListarPedidos listarPedi
     {
         var resultado = await criarPedido.ExecutarAsync(requisicao.ParaComando(), cancellationToken);
 
-        // Sem Location: GET /pedidos/{id} está fora do escopo (D-12).
         return resultado.Sucesso
             ? StatusCode(StatusCodes.Status201Created, PedidoResposta.De(resultado.Valor!))
             : RespostasDeErro.DeResultado(resultado);

@@ -6,6 +6,7 @@ namespace Pedidos.Api.Controllers;
 
 /// <summary>Leituras auxiliares para os seletores do frontend (spec 4.4, D-5).</summary>
 [ApiController]
+[Route("api/[controller]")]
 public class CatalogoController(ListarCatalogo listarCatalogo) : ControllerBase
 {
     [HttpGet("clientes")]
