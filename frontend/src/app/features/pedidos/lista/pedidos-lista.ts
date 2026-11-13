@@ -4,6 +4,7 @@ import { catchError, map, of, startWith, switchMap } from 'rxjs';
 import { ApiError, paraApiError } from '../../../core/api/api-error';
 import { CatalogoApi } from '../../../core/api/catalogo-api';
 import { PedidosApi } from '../../../core/api/pedidos-api';
+import { NotificacaoService } from '../../../core/notificacao/notificacao.service';
 import { Cliente } from '../../../core/modelos/catalogo';
 import { ConsultaPedidos, FiltrosAplicados, PaginaDePedidos } from '../../../core/modelos/pedido';
 import { DataHoraPipe } from '../../../shared/formatadores/data-hora.pipe';
@@ -34,6 +35,10 @@ const CONSULTA_INICIAL: ConsultaPedidos = {
 export class PedidosLista {
   private readonly pedidosApi = inject(PedidosApi);
   private readonly catalogoApi = inject(CatalogoApi);
+  private readonly notificacao = inject(NotificacaoService);
+
+  /** Aviso de uma tela anterior (ex.: pedido criado). Exibido uma única vez. */
+  protected readonly aviso = signal<string | null>(this.notificacao.consumir());
 
   protected readonly consulta = signal<ConsultaPedidos>(CONSULTA_INICIAL);
   protected readonly estado = signal<EstadoLista>({ tipo: 'carregando' });

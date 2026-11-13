@@ -1,6 +1,10 @@
 <section class="lista">
   <h1>Pedidos</h1>
 
+  @if (aviso(); as mensagem) {
+    <p class="sucesso" role="status">{{ mensagem }}</p>
+  }
+
   <app-pedidos-filtros [clientes]="clientes()" (filtrar)="aplicarFiltros($event)" />
 
   @let atual = estado();

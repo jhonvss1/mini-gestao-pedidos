@@ -62,3 +62,12 @@ td.numerico {
 .suave {
   color: var(--texto-suave);
 }
+
+.sucesso {
+  margin: 0;
+  padding: var(--espaco-3);
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--primaria);
+  border-radius: var(--raio);
+}
