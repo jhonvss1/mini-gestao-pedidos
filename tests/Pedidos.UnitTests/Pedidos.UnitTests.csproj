@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Pedidos.Domain\Pedidos.Domain.csproj" />
     <ProjectReference Include="..\..\src\Pedidos.Application\Pedidos.Application.csproj" />
   </ItemGroup>
