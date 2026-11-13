@@ -1,0 +1,28 @@
+<nav class="paginacao" aria-label="Paginação">
+  <p class="resumo">
+    {{ totalItens() }} {{ totalItens() === 1 ? 'registro' : 'registros' }} · página
+    {{ pagina() }} de {{ totalPaginas() || 1 }}
+  </p>
+
+  <div class="controles">
+    <label class="tamanho">
+      Por página
+      <select [value]="tamanhoPagina()" (change)="alterarTamanho($event)">
+        @for (tamanho of tamanhos; track tamanho) {
+          <option [value]="tamanho" [selected]="tamanho === tamanhoPagina()">{{ tamanho }}</option>
+        }
+      </select>
+    </label>
+
+    <button type="button" (click)="paginaAlterada.emit(pagina() - 1)" [disabled]="pagina() <= 1">
+      Anterior
+    </button>
+    <button
+      type="button"
+      (click)="paginaAlterada.emit(pagina() + 1)"
+      [disabled]="pagina() >= totalPaginas()"
+    >
+      Próxima
+    </button>
+  </div>
+</nav>
