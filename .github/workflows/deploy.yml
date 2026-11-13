@@ -119,14 +119,32 @@ jobs:
           SSH_HOST_KEY: ${{ vars.SSH_HOST_KEY }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
+          # Confere se tudo o que o deploy precisa chegou ao job (só os NOMES são exibidos, nunca os valores).
+          faltando=()
+          [[ -n "$SSH_HOST" ]] || faltando+=(SSH_HOST)
+          [[ -n "$SSH_USER" ]] || faltando+=(SSH_USER)
+          [[ -n "$SSH_HOST_KEY" ]] || faltando+=(SSH_HOST_KEY)
+          [[ -n "$SSH_PRIVATE_KEY" ]] || faltando+=(SSH_PRIVATE_KEY)
+          if (( ${#faltando[@]} > 0 )); then
+            echo "Faltam no ambiente 'producao' do GitHub (Settings > Environments > producao): ${faltando[*]}" >&2
+            exit 1
+          fi
+
           install -m 700 -d ~/.ssh
           # Remove o CR do Windows (o clipboard do PowerShell traz CRLF) e garante a quebra de linha final; sem isso o
           # OpenSSH recusa a chave com "error in libcrypto".
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # Falha cedo e com mensagem clara se o segredo não for uma chave privada válida.
-          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
-            || { echo "O segredo SSH_PRIVATE_KEY não é uma chave privada válida (cole o arquivo inteiro, com BEGIN e END)." >&2; exit 1; }
+          # Falha cedo, dizendo o que há de errado sem expor a chave (o ssh-keygen -y também detecta chave com senha).
+          if ! ssh-keygen -y -P "" -f ~/.ssh/deploy_key > /dev/null 2> "$RUNNER_TEMP/erro-chave.txt"; then
+            linhas=$(wc -l < ~/.ssh/deploy_key)
+            [[ "$(head -n 1 ~/.ssh/deploy_key)" == "-----BEGIN OPENSSH PRIVATE KEY-----" ]] && inicio=sim || inicio=nao
+            [[ "$(tail -n 1 ~/.ssh/deploy_key)" == "-----END OPENSSH PRIVATE KEY-----" ]] && fim=sim || fim=nao
+            echo "O segredo SSH_PRIVATE_KEY não é uma chave privada válida." >&2
+            echo "Diagnóstico (sem expor a chave): linhas=$linhas; começa com BEGIN OPENSSH=$inicio; termina com END OPENSSH=$fim" >&2
+            echo "Erro do ssh-keygen: $(head -n 1 "$RUNNER_TEMP/erro-chave.txt")" >&2
+            exit 1
+          fi
           # Chave do servidor fixada: protege contra alguém se passar pela instância.
           printf '%s %s\n' "$SSH_HOST" "$SSH_HOST_KEY" > ~/.ssh/known_hosts
           {
@@ -148,6 +166,8 @@ jobs:
           SSH_HOST: ${{ vars.SSH_HOST }}
           TAG: ${{ steps.alvo.outputs.tag }}
         run: |
+          [[ -n "$TUNNEL_SERVICE_TOKEN_ID" && -n "$TUNNEL_SERVICE_TOKEN_SECRET" ]] \
+            || { echo "Faltam os segredos CF_ACCESS_CLIENT_ID e/ou CF_ACCESS_CLIENT_SECRET no ambiente 'producao'." >&2; exit 1; }
           # A tag já foi validada (sha-XXXXXXX): o commit é o que vem depois de "sha-".
           ssh -o BatchMode=yes "$SSH_HOST" \
             "cd ~/gestao-pedidos && git fetch --quiet origin && git checkout --quiet --detach ${TAG#sha-} && bash scripts/deploy-remoto.sh ${TAG}"
