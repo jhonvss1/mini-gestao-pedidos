@@ -13,6 +13,9 @@ public sealed class FabricaApi(string stringConexao, params IInterceptor[] inter
 {
     public static readonly DateTimeOffset Agora = new(2026, 11, 13, 10, 30, 15, 789, TimeSpan.Zero);
 
+    /// <summary>Ajustes extras de serviços, definidos antes do primeiro <c>CreateClient</c>.</summary>
+    public Action<IServiceCollection>? ConfigurarServicos { get; init; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Pedidos", stringConexao);
@@ -22,6 +25,7 @@ public sealed class FabricaApi(string stringConexao, params IInterceptor[] inter
             servicos.AddSingleton<TimeProvider>(new FakeTimeProvider(Agora));
             foreach (var interceptor in interceptors)
                 servicos.AddSingleton(interceptor);
+            ConfigurarServicos?.Invoke(servicos);
         });
     }
 }
