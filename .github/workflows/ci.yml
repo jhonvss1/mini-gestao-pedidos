@@ -1,0 +1,82 @@
+name: CI
+
+# Roda a cada push e a cada pull request para o main. Não publica nada: só prova que o código compila,
+# passa nos testes (com SQL Server real) e que os arquivos do Compose são válidos.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (build e testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Direção das dependências entre projetos
+        shell: pwsh
+        run: ./scripts/verificar-referencias.ps1
+
+      - name: Build
+        run: dotnet build Pedidos.slnx --configuration Release
+
+      # Os testes de integração sobem um SQL Server real com Testcontainers (o runner já traz o Docker).
+      - name: Testes
+        run: dotnet test Pedidos.slnx --configuration Release --no-build --logger "console;verbosity=normal"
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+  compose:
+    name: Compose (validação)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compose de desenvolvimento
+        run: docker compose config --quiet
+
+      # Valores falsos, só para a validação: o Compose de produção recusa subir sem os segredos.
+      - name: Compose de produção
+        run: |
+          printf 'MSSQL_SA_PASSWORD=Valor_Falso_Ci_2026!\nSENHA_APP=Outro_Valor_Falso_2026!\nTUNNEL_TOKEN=token-falso\n' > "$RUNNER_TEMP/ci.env"
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file "$RUNNER_TEMP/ci.env" config --quiet
+
+      - name: O Compose de produção recusa subir sem segredos
+        run: |
+          if docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file /dev/null config --quiet 2>/dev/null; then
+            echo "O Compose de produção deveria exigir os segredos." >&2
+            exit 1
+          fi
