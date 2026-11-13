@@ -7,6 +7,20 @@ namespace Pedidos.Infrastructure.Persistencia;
 /// <summary>Consultas de leitura (sem rastreamento), projetadas direto para os read models de Application.</summary>
 public sealed class PedidoConsultas(PedidosDbContext contexto) : IPedidoConsultas
 {
+    public async Task<IReadOnlyList<ClienteResumo>> ListarClientesAsync(CancellationToken cancellationToken) =>
+        await contexto.Clientes
+            .AsNoTracking()
+            .OrderBy(c => c.Nome).ThenBy(c => c.Id)
+            .Select(c => new ClienteResumo(c.Id, c.Nome))
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<ProdutoResumo>> ListarProdutosAsync(CancellationToken cancellationToken) =>
+        await contexto.Produtos
+            .AsNoTracking()
+            .OrderBy(p => p.Nome).ThenBy(p => p.Id)
+            .Select(p => new ProdutoResumo(p.Id, p.Nome, p.Preco, p.Estoque))
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<ClienteRanking>> ObterTopClientesAsync(
         DateTime inicio,
         DateTime? fimExclusivo,
