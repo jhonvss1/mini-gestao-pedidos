@@ -52,6 +52,17 @@ public sealed class BancoDeTeste : IAsyncLifetime
         return (T)Convert.ChangeType((await comando.ExecuteScalarAsync())!, typeof(T));
     }
 
+    public Task<int> InserirClienteAsync(string nome = "Cliente de teste") =>
+        EscalarAsync<int>($"INSERT INTO dbo.cliente (nome) OUTPUT INSERTED.id VALUES (N'{nome}')");
+
+    public Task<int> InserirProdutoAsync(decimal preco, int estoque, string nome = "Produto de teste") =>
+        EscalarAsync<int>(string.Create(
+            System.Globalization.CultureInfo.InvariantCulture,
+            $"INSERT INTO dbo.produto (nome, preco, estoque) OUTPUT INSERTED.id VALUES (N'{nome}', {preco}, {estoque})"));
+
+    public Task<int> EstoqueAsync(int produtoId) =>
+        EscalarAsync<int>($"SELECT estoque FROM dbo.produto WHERE id = {produtoId}");
+
     /// <summary>Executa um comando e devolve o erro do SQL Server (null se não falhou).</summary>
     public async Task<SqlException?> ErroDoComandoAsync(string sql)
     {
