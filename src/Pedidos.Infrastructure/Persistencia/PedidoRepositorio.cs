@@ -10,10 +10,14 @@ namespace Pedidos.Infrastructure.Persistencia;
 /// sob concorrência é o <c>UPDATE</c> condicional (<c>estoque &gt;= @q</c>) aplicado em ordem crescente de id:
 /// zero linhas afetadas significa que a disputa foi perdida, e tudo é revertido.
 /// </summary>
-public sealed class PedidoRepositorio(PedidosDbContext contexto) : IPedidoRepositorio
+/// <param name="contexto">Contexto da requisição.</param>
+/// <param name="maximoTentativasPorDeadlock">
+/// Tentativas totais ao ser vítima de deadlock (1205). Use 1 nos testes para provar que a ordenação do débito, sozinha,
+/// evita deadlock.
+/// </param>
+public sealed class PedidoRepositorio(PedidosDbContext contexto, int maximoTentativasPorDeadlock = 3) : IPedidoRepositorio
 {
     private const int MaximoTentativasPorDisputa = 3;
-    private const int MaximoTentativasPorDeadlock = 3;
     private const int ErroDeadlock = 1205;
 
     public Task<bool> ClienteExisteAsync(int clienteId, CancellationToken cancellationToken) =>
@@ -32,7 +36,7 @@ public sealed class PedidoRepositorio(PedidosDbContext contexto) : IPedidoReposi
             {
                 return await CriarEmTransacaoAsync(itens, decidir, cancellationToken);
             }
-            catch (Exception ex) when (EhDeadlock(ex) && tentativa < MaximoTentativasPorDeadlock)
+            catch (Exception ex) when (EhDeadlock(ex) && tentativa < maximoTentativasPorDeadlock)
             {
                 contexto.ChangeTracker.Clear();
             }
