@@ -23,7 +23,7 @@ Domain → (nenhuma) ← Application ← Infrastructure
 
 Nada solto na raiz dos projetos: um tipo por arquivo, em pasta que diz o que ele é, e o namespace segue a pasta (evitar pasta chamada `Pedidos`, que conflita com o namespace raiz). Os testes espelham essa estrutura.
 
-- **Domain:** `Entidades/`, `ObjetosDeValor/`, `Resultados/`, `Constantes/`.
+- **Domain:** `Entidades/` (têm identidade, por isso `class`), `ObjetosDeValor/` (só o que é definido pelos valores e valida no construtor, como `ItemSolicitado`), `Resultados/` (desfechos de `Pedido.Criar` e seus dados), `Constantes/`. `record` para dado imutável sem identidade; `sealed` só onde fecha uma hierarquia (variantes de `ResultadoCriacaoPedido`).
 - **Application:** `Interfaces/` (as duas portas), `CasosDeUso/`, `Comandos/`, `Consultas/` (entradas das consultas), `Modelos/` (read models), `Validacao/`, `Comum/` (`Resultado`, `Erro`, códigos, mensagens).
 - **Infrastructure:** `Persistencia/Contexto/`, `Persistencia/Configuracoes/` (uma `IEntityTypeConfiguration` por entidade), `Persistencia/Repositorios/`, `Persistencia/Consultas/`; `DependencyInjection.cs` na raiz.
 - **Api:** `Controllers/`, `Contratos/Requisicoes/`, `Contratos/Respostas/`, `Erros/`.
