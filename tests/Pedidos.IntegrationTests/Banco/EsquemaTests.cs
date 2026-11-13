@@ -1,4 +1,4 @@
-using Pedidos.IntegrationTests.Infra;
+using Pedidos.IntegrationTests.Suporte;
 
 namespace Pedidos.IntegrationTests.Banco;
 

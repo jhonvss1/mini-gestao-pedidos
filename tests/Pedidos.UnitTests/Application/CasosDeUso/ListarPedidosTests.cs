@@ -5,7 +5,7 @@ using Pedidos.Application.Consultas;
 using Pedidos.Application.Interfaces;
 using Pedidos.Application.Modelos;
 
-namespace Pedidos.UnitTests.Application;
+namespace Pedidos.UnitTests.Application.CasosDeUso;
 
 public class ListarPedidosTests
 {

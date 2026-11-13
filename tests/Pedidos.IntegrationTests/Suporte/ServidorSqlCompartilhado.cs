@@ -1,6 +1,6 @@
 using Testcontainers.MsSql;
 
-namespace Pedidos.IntegrationTests.Infra;
+namespace Pedidos.IntegrationTests.Suporte;
 
 /// <summary>
 /// Um único SQL Server real por execução de testes, compartilhado por todas as classes.

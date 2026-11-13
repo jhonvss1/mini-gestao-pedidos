@@ -5,7 +5,7 @@ using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
 using Pedidos.Infrastructure.Persistencia.Contexto;
 using Pedidos.Infrastructure.Persistencia.Repositorios;
-using Pedidos.IntegrationTests.Infra;
+using Pedidos.IntegrationTests.Suporte;
 
 namespace Pedidos.IntegrationTests.Persistencia;
 

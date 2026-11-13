@@ -3,7 +3,7 @@ using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
 
-namespace Pedidos.UnitTests.Domain;
+namespace Pedidos.UnitTests.Domain.Entidades;
 
 public class PedidoCriarTests
 {

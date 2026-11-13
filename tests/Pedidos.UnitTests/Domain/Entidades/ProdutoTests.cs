@@ -1,6 +1,6 @@
 using Pedidos.Domain.Entidades;
 
-namespace Pedidos.UnitTests.Domain;
+namespace Pedidos.UnitTests.Domain.Entidades;
 
 public class ProdutoTests
 {

@@ -3,7 +3,7 @@ using Pedidos.Application.Comum;
 using Pedidos.Application.Validacao;
 using Pedidos.Domain.ObjetosDeValor;
 
-namespace Pedidos.UnitTests.Application;
+namespace Pedidos.UnitTests.Application.Validacao;
 
 public class ValidadorCriarPedidoTests
 {

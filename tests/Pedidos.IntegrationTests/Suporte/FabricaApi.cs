@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Pedidos.IntegrationTests.Infra;
+namespace Pedidos.IntegrationTests.Suporte;
 
 /// <summary>API real em memória apontando para o banco de teste, com relógio fixo e interceptors opcionais.</summary>
 public sealed class FabricaApi(string stringConexao, params IInterceptor[] interceptors) : WebApplicationFactory<Program>

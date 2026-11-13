@@ -9,7 +9,7 @@ using Pedidos.Domain.Entidades;
 using Pedidos.Domain.ObjetosDeValor;
 using Pedidos.Domain.Resultados;
 
-namespace Pedidos.UnitTests.Application;
+namespace Pedidos.UnitTests.Application.CasosDeUso;
 
 public class CriarPedidoTests
 {

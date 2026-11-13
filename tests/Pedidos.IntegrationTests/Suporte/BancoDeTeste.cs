@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 
-namespace Pedidos.IntegrationTests.Infra;
+namespace Pedidos.IntegrationTests.Suporte;
 
 /// <summary>
 /// Banco exclusivo de uma classe de teste, criado a partir dos scripts de database/

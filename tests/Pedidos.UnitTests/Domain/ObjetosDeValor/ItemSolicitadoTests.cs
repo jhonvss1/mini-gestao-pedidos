@@ -1,6 +1,6 @@
 using Pedidos.Domain.ObjetosDeValor;
 
-namespace Pedidos.UnitTests.Domain;
+namespace Pedidos.UnitTests.Domain.ObjetosDeValor;
 
 public class ItemSolicitadoTests
 {

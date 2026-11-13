@@ -6,7 +6,7 @@ using Pedidos.Application.Interfaces;
 using Pedidos.Domain.Entidades;
 using Pedidos.Infrastructure.Persistencia.Contexto;
 using Pedidos.Infrastructure.Persistencia.Repositorios;
-using Pedidos.IntegrationTests.Infra;
+using Pedidos.IntegrationTests.Suporte;
 
 namespace Pedidos.IntegrationTests.Api;
 

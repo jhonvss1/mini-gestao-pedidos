@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Pedidos.IntegrationTests.Infra;
+namespace Pedidos.IntegrationTests.Suporte;
 
 /// <summary>Simula uma falha na gravação do pedido, depois dos débitos de estoque e antes do commit.</summary>
 public sealed class FalhaAoSalvarInterceptor : SaveChangesInterceptor
