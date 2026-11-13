@@ -193,6 +193,16 @@ Não há MediatR, barramento de eventos, repositório genérico, Unit of Work pr
 
 O enunciado do teste usa `DataPedido`. O modelo adota `DataCriacao` (coluna `data_criacao`), decisão D-17 da spec. As duas são o mesmo dado: a data em que o pedido foi criado.
 
+## Investigação da query do ranking (Parte 4)
+
+O enunciado traz uma query de ranking "lenta e incorreta". O relato completo, com hipóteses, roteiro e a tabela de medições, está em [docs/investigacao-query.md](docs/investigacao-query.md); os scripts ficam em `database/investigacao/`. Resumo do que estava errado, por leitura do SQL:
+
+- **Resultado:** `WHERE` em coluna de `Pedidos` anula o `LEFT JOIN`; `GROUP BY` por nome funde homônimos; `ORDER BY Total` sem `DESC` devolve os menores primeiro; não há desempate nem limite.
+- **Desempenho:** `YEAR(coluna)` impede o uso de índice por data; o `GROUP BY` roda depois de multiplicar os pedidos pelos itens; faltava índice de apoio.
+- **Correção:** faixa de datas no lugar de `YEAR()`, agregação por `cliente_id` antes da junção, ordenação `DESC` com desempate por id e `TOP (5)`, igual ao endpoint `GET /api/relatorios/top-clientes`.
+
+Como investigar: gerar uma base de volume separada (`gestao_pedidos_volume`, ~500 mil pedidos), medir leituras lógicas e plano real da original e da corrigida, com e sem os índices de apoio, e provar a equivalência dos totais contra uma soma independente dos itens. **As medições ainda não foram executadas**: a tabela de evidências em `docs/investigacao-query.md` será preenchida com a saída bruta guardada em `database/investigacao/resultados/`.
+
 ## Recursos de C# e Angular usados
 
 Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem contra erro. Valem como referência de estudo.
