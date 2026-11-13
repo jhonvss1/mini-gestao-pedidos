@@ -13,7 +13,7 @@ public class CriarPedidoApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTest
     public void Dispose() => _fabrica.Dispose();
 
     private async Task<HttpResponseMessage> PostarAsync(string json) =>
-        await _fabrica.CreateClient().PostAsync("/pedidos", new StringContent(json, Encoding.UTF8, "application/json"));
+        await _fabrica.CreateClient().PostAsync("/api/pedidos", new StringContent(json, Encoding.UTF8, "application/json"));
 
     private Task<HttpResponseMessage> PostarAsync(int? clienteId, params (int? ProdutoId, int? Quantidade)[] itens)
     {
@@ -22,7 +22,7 @@ public class CriarPedidoApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTest
             clienteId,
             itens = itens.Select(i => new { produtoId = i.ProdutoId, quantidade = i.Quantidade }),
         };
-        return _fabrica.CreateClient().PostAsJsonAsync("/pedidos", corpo);
+        return _fabrica.CreateClient().PostAsJsonAsync("/api/pedidos", corpo);
     }
 
     private static async Task<JsonElement> LerAsync(HttpResponseMessage resposta) =>

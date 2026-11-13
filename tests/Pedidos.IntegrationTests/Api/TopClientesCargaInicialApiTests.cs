@@ -20,7 +20,7 @@ public class TopClientesCargaInicialApiTests(BancoDeTeste banco) : IClassFixture
     public async Task TotaisDeOutubroBatemComASomaIndependenteDosItens()
     {
         var corpo = await _fabrica.CreateClient()
-            .GetFromJsonAsync<JsonElement>("/relatorios/top-clientes?dataInicio=2026-10-01&dataFim=2026-10-31");
+            .GetFromJsonAsync<JsonElement>("/api/relatorios/top-clientes?dataInicio=2026-10-01&dataFim=2026-10-31");
         var ranking = corpo.EnumerateArray()
             .Select(e => (ClienteId: e.GetProperty("clienteId").GetInt32(), Total: e.GetProperty("valorTotal").GetDecimal()))
             .ToList();

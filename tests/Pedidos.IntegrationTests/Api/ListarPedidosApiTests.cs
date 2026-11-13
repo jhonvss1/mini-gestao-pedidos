@@ -15,7 +15,7 @@ public class ListarPedidosApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTe
         new(ano, mes, dia, hora, minuto, segundo, DateTimeKind.Utc);
 
     private async Task<HttpResponseMessage> GetAsync(string consulta) =>
-        await _fabrica.CreateClient().GetAsync("/pedidos" + consulta);
+        await _fabrica.CreateClient().GetAsync("/api/pedidos" + consulta);
 
     private async Task<JsonElement> ListarAsync(string consulta)
     {

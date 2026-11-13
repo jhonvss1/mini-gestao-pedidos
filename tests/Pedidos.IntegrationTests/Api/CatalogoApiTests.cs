@@ -19,7 +19,7 @@ public class CatalogoApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>,
         // Ordem de inserção: A (id menor), B, A (id maior). Esperado: A, A, B.
         var esperado = new[] { segundoA, primeiroA, b };
 
-        var clientes = (await _fabrica.CreateClient().GetFromJsonAsync<JsonElement>("/clientes"))
+        var clientes = (await _fabrica.CreateClient().GetFromJsonAsync<JsonElement>("/api/clientes"))
             .EnumerateArray()
             .Where(c => c.GetProperty("nome").GetString()!.StartsWith("ZZ-Catalogo"))
             .ToList();
@@ -34,7 +34,7 @@ public class CatalogoApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>,
         var mouse = await banco.InserirProdutoAsync(79.90m, estoque: 12, nome: "ZZ-Produto Mouse");
         var teclado = await banco.InserirProdutoAsync(89.90m, estoque: 0, nome: "ZZ-Produto Teclado");
 
-        var produtos = (await _fabrica.CreateClient().GetFromJsonAsync<JsonElement>("/produtos"))
+        var produtos = (await _fabrica.CreateClient().GetFromJsonAsync<JsonElement>("/api/produtos"))
             .EnumerateArray()
             .Where(p => p.GetProperty("nome").GetString()!.StartsWith("ZZ-Produto"))
             .ToList();

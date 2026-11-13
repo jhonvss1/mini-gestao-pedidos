@@ -18,7 +18,7 @@ public class CriarPedidoApiFalhaTests(BancoDeTeste banco) : IClassFixture<BancoD
         var produto = await banco.InserirProdutoAsync(10m, estoque: 10);
 
         var resposta = await _fabrica.CreateClient().PostAsJsonAsync(
-            "/pedidos",
+            "/api/pedidos",
             new { clienteId = cliente, itens = new[] { new { produtoId = produto, quantidade = 3 } } });
 
         Assert.Equal(HttpStatusCode.InternalServerError, resposta.StatusCode);

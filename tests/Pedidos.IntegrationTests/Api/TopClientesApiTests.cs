@@ -17,7 +17,7 @@ public class TopClientesApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTest
 
     private async Task<List<(int ClienteId, string Nome, decimal ValorTotal)>> ObterAsync(string inicio, string fim)
     {
-        var resposta = await _fabrica.CreateClient().GetAsync($"/relatorios/top-clientes?dataInicio={inicio}&dataFim={fim}");
+        var resposta = await _fabrica.CreateClient().GetAsync($"/api/relatorios/top-clientes?dataInicio={inicio}&dataFim={fim}");
         Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
         var corpo = await resposta.Content.ReadFromJsonAsync<JsonElement>();
         return
@@ -129,7 +129,7 @@ public class TopClientesApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTest
     [InlineData("?dataInicio=2026-10-31&dataFim=2026-10-01")]
     public async Task RetornaRequisicaoInvalidaParaPeriodoAusenteInvalidoOuInvertido(string consulta)
     {
-        var resposta = await _fabrica.CreateClient().GetAsync("/relatorios/top-clientes" + consulta);
+        var resposta = await _fabrica.CreateClient().GetAsync("/api/relatorios/top-clientes" + consulta);
 
         Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
         var corpo = await resposta.Content.ReadFromJsonAsync<JsonElement>();

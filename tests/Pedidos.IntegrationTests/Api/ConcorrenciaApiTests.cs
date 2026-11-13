@@ -44,7 +44,7 @@ public class ConcorrenciaApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTes
             .Select(async corpo =>
             {
                 await largada.Task;
-                using var resposta = await cliente.PostAsJsonAsync("/pedidos", corpo);
+                using var resposta = await cliente.PostAsJsonAsync("/api/pedidos", corpo);
                 return resposta.StatusCode;
             })
             .ToList();
