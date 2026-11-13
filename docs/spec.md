@@ -135,7 +135,7 @@ Nomenclatura: o enunciado do teste usa `DataPedido`; esta especificação adota 
 
 ## 4. Contratos dos endpoints
 
-Convenções: JSON, `camelCase`, datas/horas em ISO 8601 UTC, valores monetários como número. Erros no formato **Problem Details (RFC 7807)** com `errors` (mapa campo → mensagens, quando aplicável) e `codigo` estável **[D-2]**.
+Convenções: **todos os endpoints são servidos sob o prefixo `/api`** (ex.: `POST /api/pedidos`) **[D-20]**; os caminhos desta spec e dos critérios de aceite são relativos a esse prefixo. JSON, `camelCase`, datas/horas em ISO 8601 UTC, valores monetários como número. Erros no formato **Problem Details (RFC 7807)** com `errors` (mapa campo → mensagens, quando aplicável) e `codigo` estável **[D-2]**.
 
 ### 4.1 `POST /pedidos`
 
@@ -395,3 +395,4 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | D-17 | `DataPedido` vs `DataCriacao` | Mantido `DataCriacao` (coluna `data_criacao`), com correspondência registrada no README | Escolha do modelo; evita ambiguidade para quem compara com o enunciado. |
 | D-18 | Criação com filtros ativos | Limpar filtros, voltar à página 1 e atualizar | Garante que o pedido criado fique visível. |
 | D-19 | Nomes no banco | Tabelas no singular e colunas em snake_case (`cliente`, `produto`, `pedido`, `item_pedido`; `data_criacao`, `valor_total`...) | Padrão definido pelo autor; atributos em PascalCase e JSON em camelCase são traduzidos no mapeamento. |
+| D-20 | Prefixo das rotas | Todos os endpoints sob `/api` (`/api/pedidos`, `/api/relatorios/top-clientes`, `/api/clientes`, `/api/produtos`) | Padrão definido pelo autor; os caminhos das seções 4 e 6 são relativos ao prefixo. O frontend e o proxy usam o mesmo prefixo, sem reescrita. |
