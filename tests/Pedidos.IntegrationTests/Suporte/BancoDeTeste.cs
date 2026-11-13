@@ -38,6 +38,23 @@ public class BancoDeTeste : IAsyncLifetime
         await comando.ExecuteNonQueryAsync();
     }
 
+    /// <summary>
+    /// Executa no servidor (banco master) um script de database/ que usa variáveis do sqlcmd, como
+    /// <c>$(SENHA_APP)</c>. O sqlcmd substitui as variáveis; o ADO.NET não, então a troca é feita aqui.
+    /// </summary>
+    public async Task ExecutarScriptNoServidorAsync(string nomeArquivo, IReadOnlyDictionary<string, string> variaveis)
+    {
+        var sql = await File.ReadAllTextAsync(Path.Combine(PastaDatabase(), nomeArquivo));
+        foreach (var (nome, valor) in variaveis)
+            sql = sql.Replace($"$({nome})", valor);
+
+        await ExecutarNoServidorAsync(sql);
+    }
+
+    /// <summary>String de conexão do banco de teste usando outro login do servidor.</summary>
+    public string StringConexaoComo(string usuario, string senha) =>
+        new SqlConnectionStringBuilder(StringConexao) { UserID = usuario, Password = senha }.ConnectionString;
+
     public async Task<SqlConnection> AbrirAsync()
     {
         var conexao = new SqlConnection(StringConexao);
