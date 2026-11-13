@@ -1,6 +1,6 @@
 namespace Pedidos.Application.Modelos;
 
-public sealed record PaginaDePedidos(
+public record PaginaDePedidos(
     IReadOnlyList<PedidoListado> Registros,
     int Pagina,
     int TamanhoPagina,

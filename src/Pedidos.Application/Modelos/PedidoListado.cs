@@ -1,6 +1,6 @@
 namespace Pedidos.Application.Modelos;
 
-public sealed record PedidoListado(
+public record PedidoListado(
     int Id,
     int ClienteId,
     string ClienteNome,

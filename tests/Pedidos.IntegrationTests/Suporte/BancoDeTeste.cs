@@ -6,7 +6,7 @@ namespace Pedidos.IntegrationTests.Suporte;
 /// Banco exclusivo de uma classe de teste, criado a partir dos scripts de database/
 /// (os mesmos usados pelo Compose). Classes diferentes não compartilham dados.
 /// </summary>
-public sealed class BancoDeTeste : IAsyncLifetime
+public class BancoDeTeste : IAsyncLifetime
 {
     private string _stringConexaoServidor = "";
 

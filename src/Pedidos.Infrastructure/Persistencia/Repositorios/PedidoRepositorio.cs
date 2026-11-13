@@ -18,7 +18,7 @@ namespace Pedidos.Infrastructure.Persistencia.Repositorios;
 /// Tentativas totais ao ser vítima de deadlock (1205). Use 1 nos testes para provar que a ordenação do débito, sozinha,
 /// evita deadlock.
 /// </param>
-public sealed class PedidoRepositorio(PedidosDbContext contexto, int maximoTentativasPorDeadlock = 3) : IPedidoRepositorio
+public class PedidoRepositorio(PedidosDbContext contexto, int maximoTentativasPorDeadlock = 3) : IPedidoRepositorio
 {
     private const int MaximoTentativasPorDisputa = 3;
     private const int ErroDeadlock = 1205;

@@ -5,7 +5,7 @@ using static Pedidos.Api.Contratos.Requisicoes.ConversoresDeConsulta;
 namespace Pedidos.Api.Contratos.Requisicoes;
 
 /// <summary>Query string de <c>GET /relatorios/top-clientes</c>: período obrigatório (a Application exige a presença).</summary>
-public sealed record TopClientesParametros(string? DataInicio, string? DataFim)
+public record TopClientesParametros(string? DataInicio, string? DataFim)
 {
     public (ObterTopClientesConsulta? Consulta, IReadOnlyList<Erro> Erros) Converter()
     {

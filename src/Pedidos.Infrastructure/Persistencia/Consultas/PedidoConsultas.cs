@@ -8,7 +8,7 @@ using Pedidos.Infrastructure.Persistencia.Contexto;
 namespace Pedidos.Infrastructure.Persistencia.Consultas;
 
 /// <summary>Consultas de leitura (sem rastreamento), projetadas direto para os read models de Application.</summary>
-public sealed class PedidoConsultas(PedidosDbContext contexto) : IPedidoConsultas
+public class PedidoConsultas(PedidosDbContext contexto) : IPedidoConsultas
 {
     public async Task<IReadOnlyList<ClienteResumo>> ListarClientesAsync(CancellationToken cancellationToken) =>
         await contexto.Clientes

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 namespace Pedidos.IntegrationTests.Suporte;
 
 /// <summary>API real em memória apontando para o banco de teste, com relógio fixo e interceptors opcionais.</summary>
-public sealed class FabricaApi(string stringConexao, params IInterceptor[] interceptors) : WebApplicationFactory<Program>
+public class FabricaApi(string stringConexao, params IInterceptor[] interceptors) : WebApplicationFactory<Program>
 {
     public static readonly DateTimeOffset Agora = new(2026, 11, 13, 10, 30, 15, 789, TimeSpan.Zero);
 

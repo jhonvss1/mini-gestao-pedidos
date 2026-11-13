@@ -7,7 +7,7 @@ using Pedidos.Domain.Resultados;
 
 namespace Pedidos.Application.CasosDeUso;
 
-public sealed class CriarPedido(IPedidoRepositorio repositorio, TimeProvider relogio)
+public class CriarPedido(IPedidoRepositorio repositorio, TimeProvider relogio)
 {
     public async Task<Resultado<Pedido>> ExecutarAsync(CriarPedidoComando comando, CancellationToken cancellationToken)
     {

@@ -16,7 +16,7 @@ public class Resultado
     public bool Sucesso => Tipo == TipoResultado.Sucesso;
 }
 
-public sealed class Resultado<T> : Resultado
+public class Resultado<T> : Resultado
 {
     private Resultado(TipoResultado tipo, IReadOnlyList<Erro> erros, T? valor)
         : base(tipo, erros)

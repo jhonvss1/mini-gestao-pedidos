@@ -1,6 +1,6 @@
 namespace Pedidos.Application.Modelos;
 
-public sealed record ItemPedidoListado(
+public record ItemPedidoListado(
     int ProdutoId,
     string ProdutoNome,
     int Quantidade,

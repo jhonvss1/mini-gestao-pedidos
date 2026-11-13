@@ -5,7 +5,7 @@ using Pedidos.Application.Modelos;
 
 namespace Pedidos.Application.CasosDeUso;
 
-public sealed class ObterTopClientes(IPedidoConsultas consultas)
+public class ObterTopClientes(IPedidoConsultas consultas)
 {
     public const int Quantidade = 5;
 

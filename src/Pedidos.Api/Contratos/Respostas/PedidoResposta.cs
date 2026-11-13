@@ -2,7 +2,7 @@ using Pedidos.Domain.Entidades;
 
 namespace Pedidos.Api.Contratos.Respostas;
 
-public sealed record PedidoResposta(
+public record PedidoResposta(
     int Id,
     int ClienteId,
     DateTime DataCriacao,

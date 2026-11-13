@@ -4,7 +4,7 @@ using Pedidos.Domain.Entidades;
 
 namespace Pedidos.Infrastructure.Persistencia.Configuracoes;
 
-public sealed class PedidoConfiguracao : IEntityTypeConfiguration<Pedido>
+public class PedidoConfiguracao : IEntityTypeConfiguration<Pedido>
 {
     public void Configure(EntityTypeBuilder<Pedido> e)
     {

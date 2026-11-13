@@ -7,7 +7,7 @@ namespace Pedidos.Api.Contratos.Requisicoes;
 /// <summary>
 /// Query string de <c>GET /pedidos</c>. Todos os parâmetros malformados são reportados juntos em 400.
 /// </summary>
-public sealed record ListarPedidosParametros(
+public record ListarPedidosParametros(
     string? ClienteId,
     string? DataInicio,
     string? DataFim,

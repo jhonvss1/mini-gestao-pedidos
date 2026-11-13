@@ -5,7 +5,7 @@ using Pedidos.Application.Modelos;
 
 namespace Pedidos.Application.CasosDeUso;
 
-public sealed class ListarPedidos(IPedidoConsultas consultas)
+public class ListarPedidos(IPedidoConsultas consultas)
 {
     public const int PaginaPadrao = 1;
     public const int TamanhoPaginaPadrao = 20;
