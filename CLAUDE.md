@@ -53,6 +53,9 @@ dotnet build Pedidos.slnx
 dotnet test Pedidos.slnx
 dotnet test Pedidos.slnx --filter "CA=CA-14"      # testes de um critério (trait CA)
 powershell -File scripts/verificar-referencias.ps1  # direção das dependências
+dotnet run --project src/Pedidos.Api                # API em http://localhost:5080 (launchSettings: Development)
+npm start --prefix frontend                         # frontend em http://localhost:4200, /api via proxy.conf.json
+npm run build --prefix frontend                     # build de produção do frontend
 docker compose up --build                           # a partir do E17
 ```
 
