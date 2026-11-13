@@ -20,3 +20,6 @@ dist/
 # Dados locais
 *.mdf
 *.ldf
+
+# Saída alternativa de build (dotnet --artifacts-path .artifacts), útil com a API local rodando
+.artifacts/
