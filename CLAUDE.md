@@ -56,7 +56,8 @@ powershell -File scripts/verificar-referencias.ps1  # direção das dependência
 dotnet run --project src/Pedidos.Api                # API em http://localhost:5080 (launchSettings: Development)
 npm start --prefix frontend                         # frontend em http://localhost:4200, /api via proxy.conf.json
 npm run build --prefix frontend                     # build de produção do frontend
-docker compose up --build                           # a partir do E17
+docker compose up --build                           # banco, api (5080) e frontend (4200)
+powershell -File scripts/verificar-compose.ps1      # CA-33/CA-34; APAGA o volume do banco (down -v)
 ```
 
 ## Testes
