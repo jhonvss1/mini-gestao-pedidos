@@ -50,6 +50,12 @@ function Contagens {
     return $linha.Trim()
 }
 
+# O Windows PowerShell 5.1 entrega um array JSON como UM objeto: contar com @(...) daria 1. Percorre os itens de fato.
+function ContarItens([string]$Json) {
+    $lista = $Json | ConvertFrom-Json
+    return @($lista | ForEach-Object { $_ }).Count
+}
+
 function Requisitar([string]$Metodo, [string]$Url, [string]$Corpo) {
     $parametros = @{ UseBasicParsing = $true; Method = $Metodo; Uri = $Url; TimeoutSec = 30 }
     if ($Corpo) {
@@ -112,10 +118,10 @@ try {
     Conferir ($ids -eq '1,3,5,2,4') "GET /api/relatorios/top-clientes retorna os clientes $ids (esperado 1,3,5,2,4)"
 
     $r = Requisitar 'GET' "$base/api/clientes" $null
-    Conferir ($r.Status -eq 200 -and @($r.Corpo | ConvertFrom-Json).Count -eq 8) 'GET /api/clientes retorna 8 clientes'
+    Conferir ($r.Status -eq 200 -and (ContarItens $r.Corpo) -eq 8) 'GET /api/clientes retorna 8 clientes'
 
     $r = Requisitar 'GET' "$base/api/produtos" $null
-    Conferir ($r.Status -eq 200 -and @($r.Corpo | ConvertFrom-Json).Count -eq 7) 'GET /api/produtos retorna 7 produtos'
+    Conferir ($r.Status -eq 200 -and (ContarItens $r.Corpo) -eq 7) 'GET /api/produtos retorna 7 produtos'
 
     $r = Requisitar 'POST' "$base/api/pedidos" '{"clienteId":1,"itens":[{"produtoId":1,"quantidade":1}]}'
     $valor = if ($r.Status -eq 201) { ($r.Corpo | ConvertFrom-Json).valorTotal } else { $null }
@@ -125,7 +131,7 @@ try {
     Conferir ($r.Status -eq 409 -and $r.Corpo -match 'ESTOQUE_INSUFICIENTE') 'POST /api/pedidos sem estoque retorna 409 ESTOQUE_INSUFICIENTE'
 
     $aposPost = Contagens
-    Conferir ($aposPost -eq '8,7,17,23') "o POST válido gravou 1 pedido e 1 item (contagens $aposPost, esperado 8,7,17,23)"
+    Conferir ($aposPost -eq '8,7,17,23') "o POST valido gravou 1 pedido e 1 item (contagens $aposPost, esperado 8,7,17,23)"
 
     Passo 'Idempotência do db-init (CA-34)'
     ExecutarDocker compose run --rm db-init
@@ -138,7 +144,7 @@ catch {
 
 Write-Host ''
 if ($script:falhas.Count -eq 0) {
-    Write-Host 'Verificação do Compose concluída: tudo OK.' -ForegroundColor Green
+    Write-Host 'Verificacao do Compose concluida: tudo OK.' -ForegroundColor Green
     Write-Host "O ambiente continua no ar em $base. Para parar: docker compose down  (use -v só se quiser apagar o banco)."
     exit 0
 }
