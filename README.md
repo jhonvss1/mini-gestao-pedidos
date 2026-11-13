@@ -142,6 +142,13 @@ Diferenças em relação ao desenvolvimento: nenhuma porta publicada, senhas obr
 
 > **Nunca** rode `docker compose down -v` nem `scripts/verificar-compose.ps1` em produção: ambos apagam o volume do banco.
 
+### Integração e entrega contínuas
+
+- **CI** (`.github/workflows/ci.yml`): a cada push e pull request, confere a direção das dependências, compila, roda os testes (com SQL Server real) e valida o Compose.
+- **Deploy** (`.github/workflows/deploy.yml`): depois que o CI passa em um push ao `main`, constrói as imagens, publica no GHCR e implanta na instância por SSH pelo túnel da Cloudflare, rodando `scripts/deploy-remoto.sh`. Dá para voltar a uma versão anterior pelo *Run workflow* informando a tag.
+
+A configuração (chave SSH, Cloudflare Access, variáveis e segredos do GitHub) está na seção 11 de [docs/producao.md](docs/producao.md).
+
 ## Arquitetura
 
 Quatro projetos, com a direção das dependências garantida pelas referências de projeto:

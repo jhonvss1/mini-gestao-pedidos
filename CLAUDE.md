@@ -81,6 +81,7 @@ dotnet test Pedidos.slnx --artifacts-path .artifacts   # com a API local rodando
 - Não ler `.env`. O `.env.example` não contém segredos.
 - Qualquer MCP de banco é somente leitura e só aponta para o banco local de desenvolvimento.
 - Produção: segredos só em `.env.producao` (fora do Git), nenhuma porta publicada, API com o login `app_pedidos`. Nunca `down -v` nem `verificar-compose.ps1` em produção (apagam o volume do banco).
+- CI/CD (`.github/workflows`): o deploy entra por SSH pelo túnel da Cloudflare; chaves, tokens e senhas só nos segredos do ambiente `producao` do GitHub, nunca no repositório. O deploy não dispara por pull request nem por fork, e `scripts/deploy-remoto.sh` nunca usa `down -v`.
 
 ## Definição de pronto de uma etapa
 

@@ -112,6 +112,8 @@ A API **não tem autenticação**: qualquer pessoa com a URL consegue criar pedi
 
 ## 8. Atualizar a aplicação
 
+> Com o deploy automático configurado (seção 11), este procedimento manual só é necessário em emergência.
+
 ```bash
 git pull
 ```
@@ -183,11 +185,110 @@ O `down -v` remove os containers e o volume do banco; o `up -d` recria tudo e o 
 
 Os serviços têm `restart: unless-stopped`, então voltam sozinhos após reinício da instância. Os logs têm rotação (3 arquivos de 10 MB por serviço). Mantenha o sistema operacional atualizado (`unattended-upgrades`) e refaça o build de tempos em tempos para receber correções das imagens-base.
 
+## 11. Deploy automático (GitHub Actions)
+
+Depois de configurado, **um push no `main` publica a nova versão sozinho**: o CI roda, e se passar, o workflow *Deploy* constrói as imagens no GitHub, publica no GHCR e entra na instância por **SSH pelo túnel da Cloudflare** (o mesmo padrão de acesso do seu outro servidor) para trocar os containers.
+
+```
+push no main ──► CI (build, testes, Compose) ──► Deploy: imagens no GHCR ──► SSH pelo túnel ──► scripts/deploy-remoto.sh
+```
+
+A instância continua **sem nenhuma porta de entrada**: o `cloudflared` que já roda nela passa a publicar também o SSH, protegido por Cloudflare Access.
+
+### Preparação (uma vez só)
+
+**A. Atualizar a instância com o novo Compose.** Depois de dar `git push` desta versão, no Session Manager (como `ubuntu`, na pasta do projeto). O `--build` faz o primeiro uso, já que as imagens do GHCR ainda não existem, e recria o `cloudflared` com acesso ao SSH do host:
+
+```bash
+git pull
+```
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d --build
+```
+
+**B. Chave SSH dedicada ao deploy.** Gere na **sua máquina** (não na instância), sem senha:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f deploy_gestao_pedidos -N ""
+```
+
+Isso cria dois arquivos: `deploy_gestao_pedidos` (privada, vai para o GitHub) e `deploy_gestao_pedidos.pub` (pública, vai para a instância). Na instância, como `ubuntu`, autorize a chave pública. O prefixo `restrict` desliga encaminhamento de portas, de agente e terminal interativo para essa chave:
+
+```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+```
+
+```bash
+echo 'restrict ssh-ed25519 AAAA...cole-aqui-o-resto-da-chave-publica... github-actions-deploy' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+```
+
+Confira que o `sshd` escuta e aceita só chave (esperado: `passwordauthentication no` e `pubkeyauthentication yes`):
+
+```bash
+sudo ss -tlnp | grep ':22 '
+```
+
+```bash
+sudo sshd -T | grep -E '^(passwordauthentication|pubkeyauthentication|permitrootlogin) '
+```
+
+Pegue a **chave do servidor** (o GitHub a usa para ter certeza de que está falando com a sua instância). Guarde a saída: será a variável `SSH_HOST_KEY`:
+
+```bash
+cut -d' ' -f1,2 /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+**C. Cloudflare.** No painel Zero Trust:
+
+1. **Rota do SSH no túnel:** *Networks → Tunnels →* `gestao-pedidos` *→ Published application routes → Add*: subdomínio `ssh-gestao`, domínio `braggo.com.br`, **Service URL** `ssh://host.docker.internal:22`.
+2. **Service token:** *Access → Service Auth → Create Service Token* (nome `github-actions-deploy`). Copie o **Client ID** e o **Client Secret** (o secret só aparece uma vez).
+3. **Aplicação protegida:** *Access → Applications → Add an application → Self-hosted*, hostname `ssh-gestao.braggo.com.br`, com **uma única política**: ação **Service Auth**, regra *Include → Service Token → `github-actions-deploy`*. Assim só o token do deploy passa por esse hostname.
+
+**D. GitHub.** No repositório, *Settings → Environments → New environment* chamado **`producao`** (opcional, mas recomendado: *Required reviewers* com você mesmo, para aprovar cada deploy). Dentro do ambiente:
+
+| Tipo | Nome | Valor |
+|---|---|---|
+| Variável | `SSH_HOST` | `ssh-gestao.braggo.com.br` |
+| Variável | `SSH_USER` | `ubuntu` |
+| Variável | `SSH_HOST_KEY` | a saída do `cut ...` do passo B (algo como `ssh-ed25519 AAAA...`) |
+| Segredo | `SSH_PRIVATE_KEY` | o conteúdo **inteiro** do arquivo `deploy_gestao_pedidos` (com as linhas `BEGIN` e `END`) |
+| Segredo | `CF_ACCESS_CLIENT_ID` | o Client ID do service token |
+| Segredo | `CF_ACCESS_CLIENT_SECRET` | o Client Secret do service token |
+
+Depois de salvar, apague o arquivo da chave privada da sua máquina (ou guarde-o só no gerenciador de senhas). Em *Settings → Actions → General*, deixe *Fork pull request workflows* exigindo aprovação.
+
+**E. Primeiro deploy.** Faça um push no `main`. Na primeira vez, o workflow publica os pacotes `mini-gestao-pedidos-api` e `mini-gestao-pedidos-frontend` no GHCR, que nascem **privados**, e o deploy falha ao baixá-los na instância (`unauthorized`). Torne os dois **públicos** (as imagens não contêm segredos): no GitHub, *seu perfil → Packages →* cada pacote *→ Package settings → Change visibility → Public*. Depois, em *Actions → Deploy*, use **Re-run failed jobs**.
+
+### Uso no dia a dia
+
+- **Publicar:** push (ou merge de PR) no `main`. O CI roda primeiro; se falhar, nada é implantado.
+- **Voltar a uma versão anterior:** *Actions → Deploy → Run workflow*, informando a tag da versão (por exemplo `sha-1a2b3c4`, que aparece nos logs do deploy e na página de Packages). Não reconstrói nada, só troca para as imagens daquela tag.
+- **Ver o que está no ar:** `docker inspect gestao-pedidos-api-1 --format '{{.Config.Image}}'` na instância.
+- **Implantar à mão na instância:** `scripts/deploy-remoto.sh sha-1a2b3c4` (nunca usa `down -v`).
+
+### Por que é seguro
+
+- A instância não tem portas de entrada: o SSH só existe pelo túnel, e só passa quem tem o **service token** do Access **e** a chave dedicada, com a **chave do servidor fixada** no GitHub.
+- Os segredos ficam no ambiente `producao`. Pull requests (inclusive de forks) não recebem segredos e **não disparam deploy**: o workflow só age sobre pushes ao `main` deste repositório.
+- O deploy nunca apaga o volume do banco, e se a API não ficar saudável em 3 minutos, o job falha e mostra o log.
+- Atenção: quem tem a chave do deploy acessa a instância como `ubuntu`, que está no grupo `docker` (na prática, equivale a administrador). Trate a chave e o token como credenciais sensíveis e troque-os se houver suspeita de vazamento.
+
+### Problemas comuns do deploy
+
+| Sintoma | Causa provável | Correção |
+|---|---|---|
+| `Permission denied (publickey)` | Chave pública fora do `authorized_keys`, ou o segredo `SSH_PRIVATE_KEY` colado sem as linhas `BEGIN`/`END` | Recolar a chave privada inteira; conferir o `authorized_keys` |
+| `Host key verification failed` | `SSH_HOST_KEY` errada | Refazer o `cut -d' ' -f1,2 /etc/ssh/ssh_host_ed25519_key.pub` e atualizar a variável |
+| Erro do `cloudflared access` (falha ao conectar, 403 ou 502) | Rota `ssh://` ausente, política do Access sem o service token, ou `cloudflared` da instância sem o `extra_hosts` | Revisar a rota e a política; refazer o passo A |
+| `unauthorized` ou `denied` ao baixar as imagens | Pacotes do GHCR ainda privados | Torná-los públicos (passo E) |
+| O job falha com "A API não ficou saudável" | A nova versão não sobe | Ler o log que o job mostra e voltar à versão anterior pelo *Run workflow* |
+
 ## Limites conhecidos e próximos passos
 
 - **Licenciamento:** a imagem do SQL Server usa por padrão a edição *Developer*, que **não é licenciada para produção**. O Compose de produção fixa a edição **Express** (gratuita, permitida para produção), com limite de **10 GB por banco** e uso de memória reduzido, suficiente para este projeto. Um banco criado como *Developer* não deve ser migrado de edição; produção começa do zero em Express.
 - **Evolução do schema:** os scripts `01` só criam o que não existe. Para mudar o schema depois (nova coluna, por exemplo) falta um mecanismo de versionamento: scripts numerados aplicados uma vez com uma tabela de versão, ou uma ferramenta como DbUp. É uma decisão em aberto.
-- **Sem pipeline automático:** o deploy é manual (`git pull` e `up --build`). Evolução natural: GitHub Actions rodando `dotnet test` e publicando as imagens.
+- **Deploy automático:** descrito na seção 11 (CI com testes e deploy por SSH pelo túnel). Evoluções possíveis: ambiente de homologação separado, aprovação manual obrigatória, notificação do resultado e *scan* de vulnerabilidades das imagens.
 - **Banco gerenciado:** se a aplicação crescer, o caminho é o Amazon RDS for SQL Server: o `db-init` e o login `app_pedidos` já funcionam contra qualquer SQL Server, bastando mudar o servidor na conexão.
 - **Frontend na CDN:** servir o Angular pelo Cloudflare Pages exigiria configuração da URL da API por ambiente e CORS na API (hoje tudo é mesma origem, pelo nginx).
 - **Observabilidade:** hoje só logs do Docker e o endpoint de saúde. Evolução: CloudWatch Logs e alarmes.
