@@ -1,7 +1,7 @@
 using System.Globalization;
 using Pedidos.Application.Comum;
 
-namespace Pedidos.Api.Contratos;
+namespace Pedidos.Api.Contratos.Requisicoes;
 
 /// <summary>Parsing estrito de parâmetros de query string; vazio equivale a ausente e falhas são acumuladas.</summary>
 internal static class ConversoresDeConsulta

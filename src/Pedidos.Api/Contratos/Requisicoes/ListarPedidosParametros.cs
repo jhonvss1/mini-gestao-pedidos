@@ -1,8 +1,8 @@
 using Pedidos.Application.Comum;
 using Pedidos.Application.Consultas;
-using static Pedidos.Api.Contratos.ConversoresDeConsulta;
+using static Pedidos.Api.Contratos.Requisicoes.ConversoresDeConsulta;
 
-namespace Pedidos.Api.Contratos;
+namespace Pedidos.Api.Contratos.Requisicoes;
 
 /// <summary>
 /// Query string de <c>GET /pedidos</c>. Todos os parâmetros malformados são reportados juntos em 400.

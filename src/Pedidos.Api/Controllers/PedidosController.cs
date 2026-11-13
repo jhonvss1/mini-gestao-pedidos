@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pedidos.Api.Contratos;
+using Pedidos.Api.Contratos.Requisicoes;
+using Pedidos.Api.Contratos.Respostas;
 using Pedidos.Api.Erros;
 using Pedidos.Application.CasosDeUso;
 using Pedidos.Application.Comum;

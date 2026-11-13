@@ -1,6 +1,6 @@
 using Pedidos.Domain.Entidades;
 
-namespace Pedidos.Api.Contratos;
+namespace Pedidos.Api.Contratos.Respostas;
 
 public sealed record PedidoResposta(
     int Id,
@@ -16,5 +16,3 @@ public sealed record PedidoResposta(
         pedido.ValorTotal,
         pedido.Itens.Select(i => new ItemPedidoResposta(i.ProdutoId, i.Quantidade, i.PrecoUnitario, i.Subtotal)).ToList());
 }
-
-public sealed record ItemPedidoResposta(int ProdutoId, int Quantidade, decimal PrecoUnitario, decimal Subtotal);
