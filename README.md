@@ -138,7 +138,7 @@ Há uma camada de produção sobre o Compose, pensada para **uma instância EC2 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao up -d --build
 ```
 
-Diferenças em relação ao desenvolvimento: nenhuma porta publicada, senhas obrigatórias (modelo em [.env.producao.example](.env.producao.example)), a API conecta com o login restrito `app_pedidos` (só o que ela usa, não o `sa`), SQL Server na edição Express (a Developer não é licenciada para produção), carga de demonstração desligada por padrão, reinício automático e backup com `scripts/backup-banco.sh`.
+Diferenças em relação ao desenvolvimento: nenhuma porta publicada, senhas obrigatórias (modelo em [.env.producao.example](.env.producao.example)), a API conecta com o login restrito `app_pedidos` (só o que ela usa, não o `sa`), SQL Server na edição Express (a Developer não é licenciada para produção), carga de demonstração maior por padrão (`CARGA_INICIAL=demonstracao`: 40 clientes, 30 produtos e 320 pedidos, para o ambiente não nascer vazio), reinício automático e backup com `scripts/backup-banco.sh`.
 
 > **Nunca** rode `docker compose down -v` nem `scripts/verificar-compose.ps1` em produção: ambos apagam o volume do banco.
 

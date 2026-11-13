@@ -71,7 +71,7 @@ Preencha `.env.producao`:
 - `MSSQL_SA_PASSWORD`: senha do administrador do banco (usada só na criação do banco).
 - `SENHA_APP`: senha do login `app_pedidos`, usado pela API. **Não pode conter `app_pedidos`.**
 - `TUNNEL_TOKEN`: o token copiado na etapa anterior.
-- `CARGA_INICIAL=true` **só se** for uma demonstração pública com dados de exemplo. Em produção real deixe `false`; o banco nasce vazio.
+- `CARGA_INICIAL`: por padrão é `demonstracao`, que carrega **40 clientes, 30 produtos e 320 pedidos** de exemplo (de janeiro a novembro de 2026) para o ambiente não nascer vazio. Use `false` para começar sem dados (dados reais). A carga só entra se a tabela `cliente` estiver vazia, então **nunca sobrescreve dados existentes** nas atualizações seguintes.
 
 As duas senhas precisam ter 8 ou mais caracteres e três entre maiúscula, minúscula, dígito e símbolo. Evite aspas, `$` e `\`. Uma forma de gerar:
 
@@ -93,10 +93,10 @@ O Compose recusa subir se faltar alguma senha. Na primeira vez o build leva algu
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.producao ps
 ```
 
-Esperado: `db`, `api`, `frontend` e `cloudflared` em execução (os três primeiros `healthy`) e `db-init` encerrado com código 0. Depois, no navegador:
+Esperado: `db`, `api`, `frontend` e `cloudflared` em execução (os três primeiros `healthy`) e `db-init` encerrado com código 0. Se algo falhar, os logs do `db-init` mostram qual script SQL parou. Depois, no navegador:
 
 - `https://pedidos.seudominio.com/api/saude` deve responder `Healthy` (a API consultou o banco).
-- `https://pedidos.seudominio.com/` abre o frontend.
+- `https://pedidos.seudominio.com/` abre o frontend, com a listagem já preenchida (320 pedidos na carga de demonstração) e os seletores de cliente e produto com opções.
 
 ## 7. Proteger o acesso (recomendado)
 

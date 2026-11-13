@@ -42,7 +42,7 @@ Nada solto na raiz dos projetos: um tipo por arquivo, em pasta que diz o que ele
 
 ## Banco
 
-`database/` é a fonte do schema: `00-create-database.sql`, `01-schema.sql`, `02-seed.sql` (carga de demonstração, controlada por `CARGA_INICIAL`) e, para produção, `03-login-aplicacao.sql` e `04-permissoes-aplicacao.sql` (login `app_pedidos` com o mínimo de permissão, usado pela API no lugar do `sa`). Idempotentes, sem `GO`. Sem migrations e sem `EnsureCreated`.
+`database/` é a fonte do schema: `00-create-database.sql`, `01-schema.sql`, `02-seed.sql` (carga pequena de desenvolvimento e testes), `05-seed-demonstracao.sql` (carga maior para o ambiente publicado; o `db-init` escolhe entre elas por `CARGA_INICIAL`: `true`, `demonstracao` ou `false`) e, para produção, `03-login-aplicacao.sql` e `04-permissoes-aplicacao.sql` (login `app_pedidos` com o mínimo de permissão, usado pela API no lugar do `sa`). Idempotentes, sem `GO`. Sem migrations e sem `EnsureCreated`.
 
 Banco: `gestao_pedidos`. Nomes no banco: **tabelas no singular** (`cliente`, `produto`, `pedido`, `item_pedido`) e **colunas em snake_case** (`cliente_id`, `data_criacao`, `valor_total`, `preco_unitario`); restrições e índices no mesmo padrão (`ck_produto_estoque`, `ix_pedido_data_criacao_id`). C# em PascalCase e JSON em camelCase; a tradução é explícita no mapeamento do EF e o SQL escrito à mão usa os nomes do banco.
 
