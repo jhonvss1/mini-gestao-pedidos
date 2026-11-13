@@ -161,14 +161,4 @@ public class PedidoRepositorioTests(BancoDeTeste banco) : IClassFixture<BancoDeT
         Assert.True(await repositorio.ClienteExisteAsync(cliente, default));
         Assert.False(await repositorio.ClienteExisteAsync(int.MaxValue, default));
     }
-
-    /// <summary>Simula uma falha na gravação do pedido, depois dos débitos e antes do commit.</summary>
-    private sealed class FalhaAoSalvarInterceptor : SaveChangesInterceptor
-    {
-        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-            DbContextEventData eventData,
-            InterceptionResult<int> result,
-            CancellationToken cancellationToken = default) =>
-            throw new InvalidOperationException("Falha injetada na gravação.");
-    }
 }
