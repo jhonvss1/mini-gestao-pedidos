@@ -120,8 +120,13 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          # Remove o CR do Windows (o clipboard do PowerShell traz CRLF) e garante a quebra de linha final; sem isso o
+          # OpenSSH recusa a chave com "error in libcrypto".
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Falha cedo e com mensagem clara se o segredo não for uma chave privada válida.
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
+            || { echo "O segredo SSH_PRIVATE_KEY não é uma chave privada válida (cole o arquivo inteiro, com BEGIN e END)." >&2; exit 1; }
           # Chave do servidor fixada: protege contra alguém se passar pela instância.
           printf '%s %s\n' "$SSH_HOST" "$SSH_HOST_KEY" > ~/.ssh/known_hosts
           {
