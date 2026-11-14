@@ -1,5 +1,10 @@
 <section class="criar">
-  <h1>Novo pedido</h1>
+  <header class="cabecalho-pagina">
+    <h1>Novo pedido</h1>
+    <p class="subtitulo">
+      Escolha o cliente e os produtos. O valor final é calculado pelo servidor.
+    </p>
+  </header>
 
   <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
     <div class="campo">

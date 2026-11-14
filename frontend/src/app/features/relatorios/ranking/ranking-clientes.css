@@ -4,16 +4,6 @@
   gap: var(--espaco-3);
 }
 
-.cabecalho h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.subtitulo {
-  margin: var(--espaco-1) 0 0;
-  color: var(--texto-suave);
-}
-
 .filtros {
   display: flex;
   flex-wrap: wrap;
@@ -23,13 +13,15 @@
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  box-shadow: var(--sombra);
 }
 
 .campo {
   display: flex;
   flex-direction: column;
   gap: var(--espaco-1);
-  min-width: 11rem;
+  flex: 1 1 11rem;
+  max-width: 16rem;
 }
 
 .erro {
@@ -47,6 +39,7 @@
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  box-shadow: var(--sombra);
 }
 
 .estado.com-erro {
@@ -77,6 +70,7 @@
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  box-shadow: var(--sombra);
 }
 
 .linha.primeiro {
