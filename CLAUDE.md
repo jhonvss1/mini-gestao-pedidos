@@ -83,6 +83,19 @@ dotnet test Pedidos.slnx --artifacts-path .artifacts   # com a API local rodando
 - Produção: segredos só em `.env.producao` (fora do Git), nenhuma porta publicada, API com o login `app_pedidos`. Nunca `down -v` nem `verificar-compose.ps1` em produção (apagam o volume do banco).
 - CI/CD (`.github/workflows`): o deploy entra por SSH pelo túnel da Cloudflare; chaves, tokens e senhas só nos segredos do ambiente `producao` do GitHub, nunca no repositório. O deploy não dispara por pull request nem por fork, e `scripts/deploy-remoto.sh` nunca usa `down -v`.
 
+## Configuração do Claude Code (`.claude/`)
+
+Versionada no repositório (o `settings.local.json`, pessoal, fica de fora do Git).
+
+- `settings.json`: permissões (o que roda sem perguntar, o que pede confirmação, `.env` negado) e os hooks.
+- **Hooks** (`.claude/hooks/`):
+  - `formatar-cs.ps1` (PostToolUse): normaliza os espaços em branco do `.cs` editado com `dotnet format whitespace`.
+  - `compilar-cs.ps1` (PostToolUse): compila o projeto dono do `.cs` editado e devolve os erros ao Claude (saída 2), que corrige na hora. Usa `--artifacts-path .artifacts`, então não colide com a API local rodando.
+  - `bloquear-coautoria.ps1` (PreToolUse em Bash): recusa `git commit` cuja mensagem tenha um trailer de coautoria (nome seguido de e-mail entre `<>`), impondo por mecanismo a regra da seção Git. Só o trailer de verdade bloqueia: citar o termo em texto passa.
+- **Skills** (`.claude/skills/`):
+  - `criar-endpoint`: passo a passo para um endpoint novo no padrão do projeto (spec, Application, Infrastructure, Api, testes com trait CA e documentação).
+  - `verificar-ca`: monta a matriz critério de aceite x teste x resultado, executando os testes de verdade.
+
 ## Definição de pronto de uma etapa
 
 Build verde, testes da etapa passando, critérios de aceite citados (CA-xx) e commit seguindo o plano.
