@@ -92,6 +92,7 @@ Versionada no repositório (o `settings.local.json`, pessoal, fica de fora do Gi
   - `formatar-cs.ps1` (PostToolUse): normaliza os espaços em branco do `.cs` editado com `dotnet format whitespace`.
   - `compilar-cs.ps1` (PostToolUse): compila o projeto dono do `.cs` editado e devolve os erros ao Claude (saída 2), que corrige na hora. Usa `--artifacts-path .artifacts`, então não colide com a API local rodando.
   - `bloquear-coautoria.ps1` (PreToolUse em Bash): recusa `git commit` cuja mensagem tenha um trailer de coautoria (nome seguido de e-mail entre `<>`), impondo por mecanismo a regra da seção Git. Só o trailer de verdade bloqueia: citar o termo em texto passa.
+- **MCP** (`.mcp.json`, servidor `sql-pedidos`): SQL MCP Server do Data API builder (versão fixada em `dotnet-tools.json`; rode `dotnet tool restore`), somente leitura, config em `tools/sql-mcp/dab-config.json`. Usa o login `mcp_reader` (`database/dev/mcp-leitura.sql`) e a senha vem de `SENHA_MCP`. Só aponta para o banco local de desenvolvimento; não faz SQL livre (plano de execução é via `sqlcmd`).
 - **Skills** (`.claude/skills/`):
   - `criar-endpoint`: passo a passo para um endpoint novo no padrão do projeto (spec, Application, Infrastructure, Api, testes com trait CA e documentação).
   - `verificar-ca`: monta a matriz critério de aceite x teste x resultado, executando os testes de verdade.

@@ -217,8 +217,33 @@ A configuração do Claude Code é versionada no repositório: [CLAUDE.md](CLAUD
 | **Hook de coautoria** | [bloquear-coautoria.ps1](.claude/hooks/bloquear-coautoria.ps1) | Antes de um `git commit`, recusa mensagem com trailer de coautoria. A regra do `CLAUDE.md` passa a ser imposta por mecanismo, não só por texto |
 | **Skill `criar-endpoint`** | [SKILL.md](.claude/skills/criar-endpoint/SKILL.md) | Passo a passo de um endpoint novo no padrão do projeto: spec primeiro, Application, Infrastructure, Api, testes com trait `CA` e documentação |
 | **Skill `verificar-ca`** | [SKILL.md](.claude/skills/verificar-ca/SKILL.md) | Monta a matriz critério de aceite x teste x resultado **executando** os testes, e nunca declara um critério verificado sem rodar |
+| **MCP do SQL Server** | [.mcp.json](.mcp.json), [dab-config.json](tools/sql-mcp/dab-config.json) | Conecta o Claude ao banco local, **somente leitura**, pelo SQL MCP Server do Data API builder (detalhes abaixo) |
 
 As skills são invocadas pelo nome (`/criar-endpoint`, `/verificar-ca`) ou o Claude as aciona sozinho quando o pedido combina com a descrição.
+
+### MCP do SQL Server
+
+**O que é:** o *SQL MCP Server* do [Data API builder](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/overview) (DAB 2.1.7, fixado em [dotnet-tools.json](dotnet-tools.json)), em transporte stdio. O Claude Code o inicia sob demanda; não há processo permanente nem porta nova.
+
+**O que expõe:** só as quatro tabelas (`cliente`, `produto`, `pedido`, `item_pedido`), com a descrição de cada coluna em [dab-config.json](tools/sql-mcp/dab-config.json), pelas ferramentas `describe_entities`, `read_records` e `aggregate_records`. Ele **não executa SQL livre** e não mostra plano de execução; por isso a investigação de desempenho da Parte 4 usa `sqlcmd`, e o MCP serve para inspecionar dados (conferir o seed, o estoque depois dos testes de concorrência, os totais do ranking).
+
+**Segurança em três camadas:**
+1. login SQL `mcp_reader` com `SELECT` nas quatro tabelas e mais nada ([database/dev/mcp-leitura.sql](database/dev/mcp-leitura.sql)); nunca o `sa`;
+2. permissão `read` por entidade no DAB;
+3. `create-record`, `update-record`, `delete-record` e `execute-entity` desligados, e REST e GraphQL também.
+
+Só para desenvolvimento: o script do login não entra no Compose nem no ambiente publicado, e o servidor aponta para `localhost`. A senha **não** está no Git: vem da variável de ambiente `SENHA_MCP`.
+
+**Como habilitar (uma vez):**
+
+```bash
+dotnet tool restore
+sqlcmd -C -S localhost,1433 -U sa -P "<senha do sa>" -d master -v SENHA_MCP="<senha nova>" -i database/dev/mcp-leitura.sql
+```
+
+Defina `SENHA_MCP` com a mesma senha no ambiente em que o Claude Code é iniciado, abra o projeto e aprove o servidor `sql-pedidos` quando o Claude Code perguntar. Com o banco de pé (`docker compose up db db-init`), peça por exemplo "liste as entidades do banco" ou "mostre os 5 pedidos mais recentes".
+
+**Estado da validação:** o `dab-config.json` foi lido sem erro de estrutura pelo `dab validate` e o SQL Server local respondeu na conexão (recusou um login fictício). A chamada ponta a ponta (`describe_entities` e a leitura de `pedido` pelo Claude, com o `mcp_reader` real) **ainda não foi executada nem registrada**; esta seção só passa a descrever o uso durante o desenvolvimento depois dessa evidência.
 
 ### Como isso ajudou no desenvolvimento
 - O **hook de build** testado de propósito com um arquivo quebrado devolveu `CS1026` e `CS1002` ao Claude com código 2, sem precisar rodar o build à mão.
