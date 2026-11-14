@@ -22,6 +22,17 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File .claude/hooks/bloquear-coautoria.ps1"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
@@ -29,6 +40,11 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -File .claude/hooks/formatar-cs.ps1"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File .claude/hooks/compilar-cs.ps1",
+            "timeout": 180
           }
         ]
       }
