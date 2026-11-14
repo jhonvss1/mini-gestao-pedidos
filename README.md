@@ -129,6 +129,7 @@ Com o ambiente no ar, em http://localhost:4200:
 1. **Listagem (CA-38):** os pedidos aparecem do mais recente para o mais antigo, com o total no rodapé. Filtre por cliente, por data inicial, por data final e por combinações; o total muda a cada filtro. Os dois "João Souza" aparecem como "João Souza (#3)" e "João Souza (#5)". Com data inicial depois da final, o erro aparece e nenhuma requisição sai. Mude "Por página" e navegue entre as páginas.
 2. **Criação com erros (CA-39):** em "Novo pedido", o botão fica desabilitado sem cliente, sem produto ou com quantidade menor que 1. Escolha o produto "Webcam HD" (sem estoque) e envie: aparece o aviso de estoque com solicitado e disponível, e **o formulário continua preenchido**.
 3. **Criação com sucesso (CA-40):** com filtros ativos na listagem, crie um pedido válido. A listagem volta com filtros limpos, na página 1, com o pedido novo no topo e o aviso de sucesso. Reabra o formulário: o estoque do produto está menor.
+4. **Ranking (CA-43 a CA-45):** em "Ranking", o período já vem preenchido com o mês corrente. Consulte um mês com pedidos (por exemplo, outubro de 2026 na carga de demonstração): aparecem até cinco clientes em ordem decrescente de total, com posição, nome, id e barra proporcional; clientes homônimos são linhas distintas. Apague uma das datas ou ponha a data inicial depois da final: o erro aparece e nenhuma consulta sai. Escolha um período sem pedidos: aparece "Nenhum pedido no período informado".
 
 ## Produção
 
