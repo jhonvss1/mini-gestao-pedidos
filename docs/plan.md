@@ -3,7 +3,7 @@
 > Complementa `docs/spec.md`, que define o **quê**. Este documento define o **como**: arquitetura, mecanismos (inclusive transação e concorrência), testes, Docker, configuração do Claude Code e sequência de implementação.
 > Referências RN-xx e CA-xx apontam para a spec; PD-n, para a seção 9. Itens marcados como hipótese não foram medidos.
 >
-> **Estado da execução:** E0 a E19 concluídas; a tela do ranking (D-22), o endpoint de saúde (D-21), a camada de produção e o CI/CD foram entregues depois do plano original (seção 8, "Entregas posteriores"). E20 (MCP) não foi feita e E21 (investigação) tem análise por leitura, sem medições. Onde o texto abaixo descreve a intenção original e a implementação divergiu, a divergência vem marcada como **[atualizado]**.
+> **Estado da execução:** E0 a E19 concluídas; a tela do ranking (D-22), o endpoint de saúde (D-21), a camada de produção e o CI/CD foram entregues depois do plano original (seção 8, "Entregas posteriores"). E20 (MCP) não foi feita; E21 (investigação) foi concluída para o ranking, com medições em `database/investigacao/resultados/`. Onde o texto abaixo descreve a intenção original e a implementação divergiu, a divergência vem marcada como **[atualizado]**.
 
 ## 0. Problemas e contradições identificados
 
@@ -19,7 +19,7 @@
 | 0.8 | Caminho dos scripts: spec cita `db/` "ou caminho definido no plano"; indicado pelo autor: `database/` | Diferença de nome | Plano usa `database/`; sem mudança de comportamento na spec. Ajuste textual opcional de `db/` para `database/` em commit separado |
 | 0.9 | Spec 3.2 lista índice `item_pedido(pedido_id)` | A constraint única `(pedido_id, produto_id)` já oferece esse prefixo de índice | Índice dedicado dispensado (hipótese a confirmar por plano de execução). Ver 2.7 |
 | 0.10 | MCP "oficial" para SQL Server | O SQL MCP Server da Microsoft (Data API builder) **não executa SQL arbitrário nem expõe planos/estatísticas** | Serve para inspeção de dados somente leitura; a investigação de desempenho usa `sqlcmd`. Ver 6.4 |
-| 0.11 | Query do enunciado indisponível **[atualizado: a query foi fornecida]** | Na época do plano não era possível apontar erros reais nem medir | A query está em `docs/investigacao-query.md`, com a análise por leitura; as **medições continuam pendentes** (etapa E21) |
+| 0.11 | Query do enunciado indisponível **[atualizado: a query foi fornecida]** | Na época do plano não era possível apontar erros reais nem medir | A query está em `docs/investigacao-query.md`, com a análise por leitura; as **medições foram executadas** (etapa E21) e estão na investigação |
 | 0.12 | Modelo de resposta: serviço que acumula erros × contrato HTTP da spec | Um acumulador genérico não deve vazar para Domain nem alterar os corpos de erro já especificados | `Resultado` único em **Application** (tipo + lista de erros), traduzido pela **Api** para o Problem Details da spec 4.1, sem mudar o contrato. Domain mantém resultados tipados próprios. Ver 2.6 (PD-15) |
 
 ---
@@ -204,7 +204,7 @@ Mensagens descritivas em português, centralizadas numa classe (identificam camp
 | `uq_item_pedido_pedido_id_produto_id` | `(pedido_id, produto_id)` | integridade RN-09; busca dos itens por `pedido_id` na página | substitui o `ix_item_pedido_pedido_id` da spec 3.2 |
 | FK `item_pedido.produto_id` | sem índice dedicado | — | não há exclusão de produtos; **hipótese**, a confirmar pelo plano |
 
-Estes índices são **hipóteses de projeto**: justificados por raciocínio sobre as consultas, ainda **sem medição**. A confirmação (planos de execução e leituras lógicas, com e sem índice, em base com volume) está na seção 7 e no E21. Custo conhecido: três índices a manter em cada `INSERT` de pedido.
+Estes índices nasceram como **hipóteses de projeto**. **[atualizado]** A medição do ranking confirmou `ix_pedido_data_criacao_id` (`Index Seek`, 906 contra 1986 leituras em `pedido`); `ix_pedido_cliente_id_data_criacao_id` não é usado pelo ranking e a listagem por cliente **não foi medida**. A confirmação (planos de execução e leituras lógicas, com e sem índice, em base com volume) está na seção 7 e no E21. Custo conhecido: três índices a manter em cada `INSERT` de pedido.
 
 ### 2.8 Seed
 Datas fixas e ids explícitos (`SET IDENTITY_INSERT`) para ranking reproduzível. Cobre os mínimos da spec 3.3 (≥ 7 clientes com 2 homônimos; ≥ 6 produtos, um com estoque 5 e um com 0; ≥ 6 clientes com pedidos no mesmo período; dois períodos; ao menos um empate de total; totais e preços coerentes com RN-05).
@@ -339,7 +339,7 @@ frontend/src/app/
 
 ## 7. Investigação da query do enunciado
 
-**[atualizado]** A query do enunciado foi fornecida e a análise **por leitura** está em `docs/investigacao-query.md`; os scripts ficam em `database/investigacao/`. Esta seção define o método. **As medições ainda não foram executadas**: `database/investigacao/resultados/` está vazio e nada abaixo é resultado medido.
+**[atualizado]** A query do enunciado foi fornecida e a análise **por leitura** está em `docs/investigacao-query.md`; os scripts ficam em `database/investigacao/`. Esta seção define o método; **as medições foram executadas** e os resultados estão na investigação, com a saída bruta em `database/investigacao/resultados/`.
 
 ### 7.1 Separação obrigatória: hipótese × evidência
 `docs/investigacao-query.md` terá duas tabelas: **Hipóteses** (texto, como testar) e **Evidências** (saída bruta em `database/investigacao/resultados/`, números copiados dela). Conclusão só entra em "Evidências" com a medição anexada.
@@ -390,7 +390,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | — | **Fim dos obrigatórios** | todos os CA obrigatórios cobertos | — |
 | E19 | Skill `verificar-ca` + traits nos testes existentes — **feita** (skill em `.claude/skills/verificar-ca/`; CA-03b ganhou teste próprio) | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
 | E20 | **Não feita.** MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
-| E21 | **Parcial.** Investigação da query: scripts e análise por leitura prontos; **medições pendentes** (volume, comparação, planos, índices) | evidências em `database/investigacao/resultados/` (vazio) | `docs: registra investigação da query do enunciado` |
+| E21 | **Feita para o ranking.** Investigação da query: volume, comparação, planos e medições concluídos; **falta** medir a listagem por cliente para decidir sobre `ix_pedido_cliente_id_data_criacao_id` | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
 | E22 | (Opcional) testes de frontend e revisão final do plano — **não feita**; PD-13 mantém o roteiro manual | — | `test(frontend): ...` / `docs: atualiza plano` |
 
 ### Entregas posteriores ao plano original
@@ -424,7 +424,7 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 | PD-11 | MCP de SQL | DAB SQL MCP Server; servidores comunitários | **DAB** (oficial, somente entidades, somente leitura configurável); planos e estatísticas via `sqlcmd` | Preview; sem SQL livre; sintaxe de integração com Claude Code a confirmar |
 | PD-12 | Hook | formatação de `.cs`; barrar commit com coautoria | **Formatação**; o outro fica como opção | — |
 | PD-13 | Testes de frontend | só roteiro manual; testes de componente | **Roteiro manual** (spec não pede automatizados) | Regressões visuais não detectadas |
-| PD-14 | Índices | conjunto da 2.7; adiar até medir | **Criar o conjunto mínimo** e revisar com evidências (E21) | Sem medição, são hipóteses |
+| PD-14 | Índices | conjunto da 2.7; adiar até medir | **Criar o conjunto mínimo** e revisar com evidências (E21). **[atualizado]** Um dos dois foi confirmado pela medição; o outro segue sem medição na listagem | O índice por cliente custa em todo `INSERT` sem benefício medido |
 | PD-15 | Modelo de resposta | resultado único + contrato da spec; contrato unificado `erros[]` (altera a spec 4.1); tipos de falha distintos | **Resultado único + contrato da spec (decidido pelo autor)**: notificação acumulada em Application, spec intacta; no frontend, serviço de erros por tela | Mapeamento extra na Api; `Dados` do erro exige convenção por código |
 | PD-16 | Tradução dos nomes do banco (snake_case, singular) | Mapeamento Fluent explícito; pacote `EFCore.NamingConventions` | **Explícito**: 4 tabelas, sem dependência extra, e o teste de deriva de schema detecta divergência | Mais linhas de configuração; esquecer uma coluna é pego pelo teste |
 
