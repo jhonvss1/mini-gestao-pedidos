@@ -1,0 +1,42 @@
+1) valor_total diverge da soma dos itens? ESPERADO: 0
+pedidos_divergentes
+-------------------
+0
+2) corrigida EXCEPT referencia. ESPERADO: 0 linhas
+cliente_id total
+---------- -----
+3) referencia EXCEPT corrigida. ESPERADO: 0 linhas
+cliente_id total
+---------- -----
+4) Linhas: clientes com pedido em 2026 (corrigida) x linhas da original (agrupada por NOME)
+clientes_com_pedido_2026 linhas_original nomes_distintos_entre_eles
+------------------------ --------------- --------------------------
+4500 4000 4000
+5) Total geral: original x corrigida. ESPERADO: iguais (a original so perde a separacao dos homonimos)
+soma_original soma_corrigida
+------------- --------------
+431910813.80 431910813.80
+6) Nomes fundidos na original (homonimos com pedido em 2026)
+nomes_fundidos
+--------------
+500
+7) Ordem: 5 primeiras linhas da ORIGINAL (ORDER BY total, ascendente = os MENORES)
+nome total
+---- -----
+Cliente 2296 2439.80
+Cliente 3096 2439.80
+Cliente 1696 2516.40
+Cliente 1496 2516.40
+Cliente 2096 2516.40
+8) Ranking correto (corrigida, TOP 5)
+id nome total
+-- ---- -----
+3634 Cliente 3634 254635.00
+2434 Cliente 2434 254185.00
+2234 Cliente 2234 250027.50
+3034 Cliente 3034 250027.50
+4434 Cliente 434 250027.50
+9) Clientes sem nenhum pedido que a original NAO mostra (WHERE em coluna de pedido anula o LEFT JOIN)
+clientes_sem_pedido
+-------------------
+500
