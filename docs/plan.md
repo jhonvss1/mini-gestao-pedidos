@@ -2,6 +2,8 @@
 
 > Complementa `docs/spec.md`, que define o **quê**. Este documento define o **como**: arquitetura, mecanismos (inclusive transação e concorrência), testes, Docker, configuração do Claude Code e sequência de implementação.
 > Referências RN-xx e CA-xx apontam para a spec; PD-n, para a seção 9. Itens marcados como hipótese não foram medidos.
+>
+> **Estado da execução:** E0 a E19 concluídas; a tela do ranking (D-22), o endpoint de saúde (D-21), a camada de produção e o CI/CD foram entregues depois do plano original (seção 8, "Entregas posteriores"). E20 (MCP) não foi feita e E21 (investigação) tem análise por leitura, sem medições. Onde o texto abaixo descreve a intenção original e a implementação divergiu, a divergência vem marcada como **[atualizado]**.
 
 ## 0. Problemas e contradições identificados
 
@@ -17,7 +19,7 @@
 | 0.8 | Caminho dos scripts: spec cita `db/` "ou caminho definido no plano"; indicado pelo autor: `database/` | Diferença de nome | Plano usa `database/`; sem mudança de comportamento na spec. Ajuste textual opcional de `db/` para `database/` em commit separado |
 | 0.9 | Spec 3.2 lista índice `item_pedido(pedido_id)` | A constraint única `(pedido_id, produto_id)` já oferece esse prefixo de índice | Índice dedicado dispensado (hipótese a confirmar por plano de execução). Ver 2.7 |
 | 0.10 | MCP "oficial" para SQL Server | O SQL MCP Server da Microsoft (Data API builder) **não executa SQL arbitrário nem expõe planos/estatísticas** | Serve para inspeção de dados somente leitura; a investigação de desempenho usa `sqlcmd`. Ver 6.4 |
-| 0.11 | Query do enunciado indisponível | Não é possível apontar erros reais nem medir | Seção 7 traz **só o método**; análise fica pendente até a query ser fornecida (etapa E21) |
+| 0.11 | Query do enunciado indisponível **[atualizado: a query foi fornecida]** | Na época do plano não era possível apontar erros reais nem medir | A query está em `docs/investigacao-query.md`, com a análise por leitura; as **medições continuam pendentes** (etapa E21) |
 | 0.12 | Modelo de resposta: serviço que acumula erros × contrato HTTP da spec | Um acumulador genérico não deve vazar para Domain nem alterar os corpos de erro já especificados | `Resultado` único em **Application** (tipo + lista de erros), traduzido pela **Api** para o Problem Details da spec 4.1, sem mudar o contrato. Domain mantém resultados tipados próprios. Ver 2.6 (PD-15) |
 
 ---
@@ -31,15 +33,19 @@ mini-gestao-pedidos/
 ├── global.json  Directory.Build.props  Directory.Packages.props   (gestão central de pacotes)
 ├── .editorconfig  .gitignore  .dockerignore  .env.example  docker-compose.yml
 ├── CLAUDE.md  README.md
-├── .claude/        settings.json, hooks/, skills/        (6)
-├── .mcp.json                                              (6.4, só após validação)
-├── docs/           spec.md, plan.md, investigacao-query.md (7)
+├── .claude/        settings.json, hooks/, skills/verificar-ca/  (6)
+├── .mcp.json                                              (6.4, **não criado**: E20 não feita)
+├── .github/workflows/  ci.yml, deploy.yml                 (8, entregas posteriores)
+├── docs/           spec.md, plan.md, investigacao-query.md (7), producao.md
 ├── database/
 │   ├── 00-create-database.sql   cria o banco se não existir (executa no master)
 │   ├── 01-schema.sql            tabelas, FKs, CHECKs, índices (idempotente)
 │   ├── 02-seed.sql              carga inicial determinística (idempotente)
-│   └── investigacao/            gerar-volume.sql, consultas e resultados medidos (7)
-├── scripts/        verificar-compose.ps1                  (4.4)
+│   ├── 03-login-aplicacao.sql   login restrito app_pedidos (produção)
+│   ├── 04-permissoes-aplicacao.sql  permissões mínimas do login (produção)
+│   ├── 05-seed-demonstracao.sql carga maior para o ambiente publicado
+│   └── investigacao/            scripts 00 a 06 e resultados medidos (7)
+├── scripts/        verificar-compose.ps1, verificar-referencias.ps1, backup-banco.sh, restaurar-banco.sh, deploy-remoto.sh
 ├── src/
 │   ├── Pedidos.Domain/
 │   ├── Pedidos.Application/
@@ -217,13 +223,15 @@ frontend/src/app/
 │   ├── lista/       pedidos-lista.component, pedidos-filtros.component
 │   └── criar/       pedido-criar.component, linha-item.component
 ├── shared/          paginacao.component, erros-api.component, formatadores (moeda/data)
-└── app.routes.ts    /pedidos, /pedidos/novo
+├── features/relatorios/ranking/   ranking-clientes (D-22)
+└── app.routes.ts    /pedidos, /pedidos/novo, /relatorios/ranking
 ```
 - **Listagem:** filtros (cliente por `GET /clientes`, data inicial, data final com `input type=date`, que já entrega `yyyy-MM-dd`); valida `inicio <= fim` antes de consultar; `switchMap` cancela a requisição anterior; paginação com `totalItens`/`totalPaginas`.
 - **Estados:** `carregando | ok | vazio | erro`. `erro` mostra mensagem do `ApiError` e botão "tentar novamente"; falha de rede e `5xx` usam mensagem genérica.
 - **Criação:** cliente + linhas dinâmicas (produto, quantidade), envio bloqueado sem itens ou com quantidade ≤ 0 e **desabilitado durante o envio** (evita duplicidade); total estimado em **centavos inteiros** (`Math.round(preco * 100) * quantidade`) com aviso de que o valor final é o do servidor; exibição com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
 - **Erros da API:** o `ApiError` (mapeado do Problem Details) alimenta um **`ErrosService` escopado à tela** (provido no componente; limpo ao reenviar e ao sair; sem estado global que vaze erros antigos entre rotas). O `ErrosApiComponent` lista os erros e `porCampo('itens[0].quantidade')` liga mensagens aos controles. `422` → mensagens por campo; `404` → mensagem sobre o cliente/produto; `409` → lista de produtos com solicitado/disponível; `400`/`5xx` → mensagem geral via `NotificacaoService`. O formulário **não é limpo** em caso de erro (CA-39).
 - **Após `201`:** limpa filtros, volta à página 1 e recarrega (D-18, CA-40).
+- **Ranking (D-22, **[atualizado]**: não estava no plano original):** rota própria; período obrigatório, preenchido com o mês corrente; valida `dataInicio <= fim` antes de consultar; lista até 5 clientes com posição, nome, id (distingue homônimos) e barra proporcional ao maior total; estados carregando, vazio e erro com "Tentar novamente" (CA-43 a CA-45).
 - **Rede:** a API já responde sob `/api` (spec D-20), então o frontend chama `/api/...` e nenhum proxy reescreve o caminho. Em desenvolvimento, `proxy.conf.json` leva `/api` à API **sem alterar o caminho**; no Compose, o nginx serve o build e faz proxy de `/api/` **mantendo o prefixo**, o que evita CORS.
 
 ---
@@ -237,7 +245,7 @@ frontend/src/app/
 | Unitários de aplicação | `UnitTests/Application` | ordem e curto-circuito das etapas, agregação de erros, validação de parâmetros, mapeamento de resultados | NSubstitute nas 2 portas; `FakeTimeProvider` |
 | Integração | `IntegrationTests` | API + Infrastructure contra **SQL Server real** | nenhum para banco |
 | Verificação do Compose | `scripts/verificar-compose.ps1` + README | subida completa | — |
-| Frontend | roteiro manual no README | CA-38 a CA-40 | — (a spec não pede testes automatizados) |
+| Frontend | roteiro manual no README | CA-38 a CA-40 e CA-43 a CA-45 | — (a spec não pede testes automatizados) |
 
 ### 4.2 SQL Server real nos testes de integração
 - **Testcontainers (MsSql)**, mesma imagem e tag do Compose, uma instância por execução (fixture de assembly). Requer Docker em execução na máquina; documentado no README.
@@ -257,12 +265,12 @@ frontend/src/app/
 ### 4.5 Relação com os critérios de aceite
 | Critérios | Camada principal |
 |---|---|
-| CA-01 a CA-17c | Integração; regras puras também em unitários de Domain/Application |
+| CA-01 a CA-17c (inclui CA-03b) | Integração; regras puras também em unitários de Domain/Application |
 | CA-18 a CA-25 | Integração (+ unitários de datas e paginação) |
 | CA-26 a CA-32 | Integração |
 | CA-34 a CA-37 | Integração (scripts, constraints, `decimal(18,2)`, seed) |
 | CA-33 | `verificar-compose.ps1` + README |
-| CA-38 a CA-40 | Roteiro manual do frontend |
+| CA-38 a CA-40, CA-43 a CA-45 | Roteiro manual do frontend |
 | CA-41, CA-42 | Estrutura dos projetos de teste |
 
 ---
@@ -273,7 +281,7 @@ frontend/src/app/
 |---|---|---|---|
 | `db` | `mcr.microsoft.com/mssql/server:2022-latest` (tag fixada na implementação) | `sqlcmd -C -Q "SELECT 1"` (intervalo 5 s, `start_period` 20 s, 20 tentativas) | — |
 | `db-init` | mesma imagem (contém `sqlcmd`), scripts montados somente leitura | — (serviço de uma execução, `restart: "no"`) | `db` saudável |
-| `api` | build multi-stage `sdk:10.0` → `aspnet:10.0`, porta 8080 | verificação TCP na porta 8080 (a imagem não traz `curl`) | `db-init` com `service_completed_successfully` |
+| `api` | build multi-stage `sdk:10.0` → `aspnet:10.0`, porta 8080 | **[atualizado]** `GET /api/saude` via `/dev/tcp` do bash (a imagem não traz `curl`); consulta o banco (D-21) | `db-init` com `service_completed_successfully` |
 | `frontend` | build `node` → `nginx:alpine`, `nginx.conf` com proxy `/api/` (mantém o prefixo) | `wget -qO- http://localhost/` | `api` saudável |
 
 - `db-init` executa `00-create-database.sql` (no `master`), depois `01-schema.sql` e `02-seed.sql` no banco `gestao_pedidos`, com `sqlcmd -b` (aborta em erro). Idempotente: pode rodar a cada `up`.
@@ -303,14 +311,14 @@ frontend/src/app/
 - Alternativa considerada: `PreToolUse` em `Bash` negando `git commit` com `Co-Authored-By`, que impõe por mecanismo a regra de commits do projeto (PD-12).
 - `.claude/settings.json` (versionado) também declara permissões: permitir `dotnet build/test/format`, `docker compose config/ps/logs/up`, `git status/diff/log`; **pedir confirmação** para `docker compose down -v` e `git push`; **negar** leitura de `.env`. O `.claude/settings.local.json` existente (permite `git add/commit`) permanece local.
 
-### 6.3 Skill customizada: `verificar-ca`
+### 6.3 Skill customizada: `verificar-ca` **[atualizado: criada em E19]**
 - **Local:** `.claude/skills/verificar-ca/SKILL.md`. **Propósito:** ligar spec e testes, dado um ou mais CA (ou "todos").
 - **Passos da skill:** (1) ler os CA em `docs/spec.md`; (2) localizar testes com `[Trait("CA","CA-xx")]`; (3) executar `dotnet test --filter "CA=CA-xx"`; (4) emitir tabela CA × teste × resultado, marcando **sem teste** e **manuais** (CA-33, CA-38 a CA-40, com ponteiro ao README); (5) nunca declarar CA verificado sem ter executado o teste nessa rodada.
 - **Por que serve ao projeto:** a spec tem ~45 critérios; a matriz de rastreabilidade (4.5) deixa de ser manual.
 
 ### 6.4 MCP para SQL Server
 
-**Estado: nada foi instalado, configurado ou conectado.** O que segue vem de **leitura da documentação** (2026-11-12) e será confirmado por execução em etapa própria (E20).
+**Estado: nada foi instalado, configurado ou conectado (E20 não foi executada; não existe `.mcp.json`).** O que segue vem de **leitura da documentação** (2026-11-12) e será confirmado por execução em etapa própria (E20).
 
 - **Implementação identificada:** **SQL MCP Server**, parte do **Data API builder (DAB)** da Microsoft, ferramenta .NET de código aberto. Documentação: [visão geral](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/overview), [início rápido](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/quickstart-visual-studio-code), [ferramentas DML](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/data-manipulation-language-tools), [transporte stdio](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/stdio-transport), [autenticação](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/how-to-configure-authentication).
 - **Versão:** disponível a partir do DAB 1.7; a documentação recomenda a 2.0. Status de preview/GA e suporte: **não encontrado na documentação lida**.
@@ -331,7 +339,7 @@ frontend/src/app/
 
 ## 7. Investigação da query do enunciado
 
-**Pendente: o texto da query não foi fornecido.** Esta seção define o método; a análise e as conclusões ficam em `docs/investigacao-query.md`, criado na etapa E21. Nada abaixo é resultado medido.
+**[atualizado]** A query do enunciado foi fornecida e a análise **por leitura** está em `docs/investigacao-query.md`; os scripts ficam em `database/investigacao/`. Esta seção define o método. **As medições ainda não foram executadas**: `database/investigacao/resultados/` está vazio e nada abaixo é resultado medido.
 
 ### 7.1 Separação obrigatória: hipótese × evidência
 `docs/investigacao-query.md` terá duas tabelas: **Hipóteses** (texto, como testar) e **Evidências** (saída bruta em `database/investigacao/resultados/`, números copiados dela). Conclusão só entra em "Evidências" com a medição anexada.
@@ -341,7 +349,7 @@ frontend/src/app/
 - **Desempenho:** função sobre coluna filtrada (ex.: conversão de data) impedindo `Seek`; subconsulta correlacionada; `SELECT *`; ausência de índice de apoio; ordenação sem índice; conversões implícitas.
 
 ### 7.3 Dados
-Seed pequeno (correção) + `database/investigacao/gerar-volume.sql` (geração em conjunto, determinística, base separada `gestao_pedidos_volume`, ordem de grandeza a definir, p. ex. centenas de milhares de pedidos). Nunca incluída nos testes nem no Compose padrão.
+Seed pequeno (correção) + `database/investigacao/01-gerar-volume.sql` (geração em conjunto, determinística, base separada `gestao_pedidos_volume`, ordem de grandeza a definir, p. ex. centenas de milhares de pedidos). Nunca incluída nos testes nem no Compose padrão.
 
 ### 7.4 Comparar resultados
 Executar original e corrigida no seed e no volume; comparar com `EXCEPT` nos dois sentidos, contagem de linhas e `CHECKSUM_AGG`; recalcular o total por uma consulta independente (`SUM(quantidade * preco_unitario)` sobre `item_pedido`) para expor multiplicação de linhas. Toda diferença entre original e corrigida precisa ser explicada linha a linha.
@@ -380,10 +388,22 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | E17 | Dockerfiles, nginx, Compose completo, `verificar-compose.ps1` | CA-33 executado e registrado | `chore(docker): completa execução com docker compose up` |
 | E18 | `README.md` (execução, testes, Compose, roteiros, risco residual, `DataPedido`↔`DataCriacao`) | seguir o README do zero | `docs: adiciona README` |
 | — | **Fim dos obrigatórios** | todos os CA obrigatórios cobertos | — |
-| E19 | Skill `verificar-ca` + traits nos testes existentes | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
-| E20 | MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
-| E21 | Investigação da query (**depende da query do enunciado**): volume, comparação, planos, índices | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
-| E22 | (Opcional) testes de frontend e revisão final do plano | — | `test(frontend): ...` / `docs: atualiza plano` |
+| E19 | Skill `verificar-ca` + traits nos testes existentes — **feita** (skill em `.claude/skills/verificar-ca/`; CA-03b ganhou teste próprio) | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
+| E20 | **Não feita.** MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
+| E21 | **Parcial.** Investigação da query: scripts e análise por leitura prontos; **medições pendentes** (volume, comparação, planos, índices) | evidências em `database/investigacao/resultados/` (vazio) | `docs: registra investigação da query do enunciado` |
+| E22 | (Opcional) testes de frontend e revisão final do plano — **não feita**; PD-13 mantém o roteiro manual | — | `test(frontend): ...` / `docs: atualiza plano` |
+
+### Entregas posteriores ao plano original
+
+Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado na spec ou em `docs/producao.md`:
+
+| Entrega | Origem | Onde |
+|---|---|---|
+| Endpoint `GET /api/saude` e healthcheck da API pelo banco | D-21 | `docs/spec.md` 4.5, `docker-compose.yml` |
+| Camada de produção do Compose, login restrito `app_pedidos`, carga de demonstração, backup e restauração | — | `docs/producao.md`, `database/03` a `05`, `scripts/` |
+| CI (build, testes, referências, Compose) e deploy por SSH pelo túnel da Cloudflare | — | `.github/workflows/`, `docs/producao.md` seção 11 |
+| Tela do ranking de clientes | D-22 (revisa D-14) | `frontend/src/app/features/relatorios/ranking/`, CA-43 a CA-45 |
+| Scripts da investigação da query (00 a 06) e análise por leitura | E21 parcial | `database/investigacao/`, `docs/investigacao-query.md` |
 
 ---
 
@@ -399,7 +419,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | PD-6 | Onde fica a validação da etapa 1 | Application; Domain | **Application** (mensagens com caminho), guardas no Domain | Duplicação de regras simples |
 | PD-7 | SDK .NET | instalar SDK 10; usar SDK 11 com alvo `net10.0` | **SDK 10**, igual às imagens Docker | Instalação é ação do desenvolvedor (altera o sistema) |
 | PD-8 | Senha do SA no Compose | padrão de desenvolvimento no `compose`; exigir `.env` | **Padrão de dev + `.env.example`**, para `up` sem passos | Credencial padrão no repositório; só local |
-| PD-9 | Healthcheck da API | TCP; endpoint `/health` | **TCP** (sem endpoint novo, sem `curl` na imagem) | Não prova que o banco responde (ordem do Compose cobre) |
+| PD-9 | Healthcheck da API | TCP; endpoint `/health` | ~~TCP~~ **[atualizado] `GET /api/saude`** (D-21): a recomendação inicial era TCP, mas o endpoint que consulta o banco prova a dependência real e foi adotado | Endpoint fora do contrato de negócio; a requisição usa `/dev/tcp` por falta de `curl` na imagem |
 | PD-10 | SQL Server nos testes | Testcontainers; `db` do Compose | **Testcontainers**: independente de ambiente manual | Exige Docker rodando |
 | PD-11 | MCP de SQL | DAB SQL MCP Server; servidores comunitários | **DAB** (oficial, somente entidades, somente leitura configurável); planos e estatísticas via `sqlcmd` | Preview; sem SQL livre; sintaxe de integração com Claude Code a confirmar |
 | PD-12 | Hook | formatação de `.cs`; barrar commit com coautoria | **Formatação**; o outro fica como opção | — |
