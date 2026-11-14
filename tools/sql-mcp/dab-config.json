@@ -1,0 +1,69 @@
+{
+  "$schema": "https://github.com/Azure/data-api-builder/releases/latest/download/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "mssql",
+    "connection-string": "@env('MSSQL_MCP_CONNECTION_STRING')"
+  },
+  "runtime": {
+    "rest": { "enabled": false },
+    "graphql": { "enabled": false },
+    "mcp": {
+      "enabled": true,
+      "dml-tools": {
+        "describe-entities": true,
+        "read-records": true,
+        "aggregate-records": true,
+        "create-record": false,
+        "update-record": false,
+        "delete-record": false,
+        "execute-entity": false
+      }
+    },
+    "host": { "mode": "development" }
+  },
+  "entities": {
+    "cliente": {
+      "description": "Clientes que fazem pedidos. Nomes podem se repetir: identifique sempre pelo id.",
+      "source": { "object": "dbo.cliente", "type": "table" },
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "fields": [
+        { "name": "id", "description": "Identificador do cliente.", "primary-key": true },
+        { "name": "nome", "description": "Nome do cliente (não é único)." }
+      ]
+    },
+    "produto": {
+      "description": "Catálogo de produtos com preço e saldo de estoque.",
+      "source": { "object": "dbo.produto", "type": "table" },
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "fields": [
+        { "name": "id", "description": "Identificador do produto.", "primary-key": true },
+        { "name": "nome", "description": "Nome do produto." },
+        { "name": "preco", "description": "Preço atual de cadastro em reais, decimal(18,2). Sempre maior que zero." },
+        { "name": "estoque", "description": "Saldo em estoque, nunca negativo." }
+      ]
+    },
+    "pedido": {
+      "description": "Pedidos criados. Cada pedido tem um cliente e itens (entidade item_pedido).",
+      "source": { "object": "dbo.pedido", "type": "table" },
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "fields": [
+        { "name": "id", "description": "Identificador do pedido.", "primary-key": true },
+        { "name": "cliente_id", "description": "Cliente dono do pedido (cliente.id)." },
+        { "name": "data_criacao", "description": "Data e hora de criação em UTC, truncada em segundos." },
+        { "name": "valor_total", "description": "Soma de quantidade x preco_unitario dos itens, decimal(18,2)." }
+      ]
+    },
+    "item_pedido": {
+      "description": "Itens de um pedido, com o preço copiado do cadastro no momento da venda. Há no máximo um item por produto em cada pedido.",
+      "source": { "object": "dbo.item_pedido", "type": "table" },
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "fields": [
+        { "name": "id", "description": "Identificador do item.", "primary-key": true },
+        { "name": "pedido_id", "description": "Pedido ao qual o item pertence (pedido.id)." },
+        { "name": "produto_id", "description": "Produto vendido (produto.id)." },
+        { "name": "quantidade", "description": "Quantidade vendida, maior que zero." },
+        { "name": "preco_unitario", "description": "Preço unitário na data da venda, decimal(18,2). Não muda se o preço do produto mudar." }
+      ]
+    }
+  }
+}
