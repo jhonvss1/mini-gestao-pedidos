@@ -118,6 +118,7 @@ dotnet test Pedidos.slnx --filter "CA=CA-14"
 
 | O que | Como |
 |---|---|
+| Rastrear um critério até o teste (Claude Code) | skill `verificar-ca` em `.claude/skills/verificar-ca/` |
 | Direção das dependências entre projetos | `powershell -File scripts/verificar-referencias.ps1` |
 | Execução completa pelo Compose (CA-33) e idempotência do `db-init` (CA-34) | `powershell -File scripts/verificar-compose.ps1` (**apaga o volume do banco**) |
 | Frontend (CA-38 a CA-40) | Roteiro manual abaixo (a spec não pede testes automatizados do frontend) |
@@ -236,5 +237,6 @@ Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem
 - **Credencial de desenvolvimento** (senha do `sa`) está versionada de propósito, para o `docker compose up` funcionar sem passos extras. Serve só para ambiente local; em produção as senhas ficam em `.env.producao`, fora do Git.
 - **Evolução do schema:** os scripts de `database/` só criam o que não existe; falta um mecanismo de versionamento para alterar o schema depois (ver [docs/producao.md](docs/producao.md)).
 - **Sem autenticação**, edição ou cancelamento de pedidos (fora do escopo, spec 1.4).
-- **Índices de `pedido`** (`ix_pedido_data_criacao_id` e `ix_pedido_cliente_id_data_criacao_id`) são hipóteses de projeto justificadas pelas consultas, **ainda sem medição** com volume.
-- **Investigação da query do enunciado** (etapa E21 do plano) está pendente: o texto da query não foi fornecido, então não há análise nem `docs/investigacao-query.md`. O plano descreve o método.
+- **Índices de `pedido`** (`ix_pedido_data_criacao_id` e `ix_pedido_cliente_id_data_criacao_id`) são hipóteses de projeto justificadas pelas consultas, **ainda sem medição** com volume (depende da investigação acima).
+- **Investigação da query do enunciado** (etapa E21 do plano): a análise por leitura está pronta em [docs/investigacao-query.md](docs/investigacao-query.md), mas as **medições não foram executadas** (`database/investigacao/resultados/` está vazio). Os ganhos de desempenho citados lá são hipóteses, não resultados.
+- **Itens do plano não realizados:** o MCP somente leitura para o SQL Server (E20) e os testes automatizados do frontend (E22, opcional) ficaram de fora.
