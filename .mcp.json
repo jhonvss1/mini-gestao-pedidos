@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sql-pedidos": {
+      "command": "dotnet",
+      "args": ["tool", "run", "dab", "start", "--mcp-stdio", "role:anonymous", "--config", "tools/sql-mcp/dab-config.json", "--LogLevel", "error"],
+      "env": {
+        "MSSQL_MCP_CONNECTION_STRING": "Server=${MCP_DB_HOST:-localhost},${MCP_DB_PORT:-1433};Database=gestao_pedidos;User Id=mcp_reader;Password=${SENHA_MCP};TrustServerCertificate=True"
+      }
+    }
+  }
+}
