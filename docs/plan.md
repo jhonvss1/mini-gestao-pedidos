@@ -430,14 +430,14 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 
 ### Revisão humana
 
-**Status: parcial.** 14 itens decididos pelo autor; **PD-4 e PD-6 estão em discussão** e podem mudar a arquitetura (nenhuma mudança de código foi feita por causa deles). Registro de 2026-11-14.
+**Status: parcial.** 15 itens decididos pelo autor; **PD-6 está em discussão**. O PD-4 foi decidido, mas ainda **não implementado**: ele muda a arquitetura e, pelo `CLAUDE.md`, a mudança começa pela spec e pelo plano (nenhuma mudança de código foi feita). Registro de 2026-11-14.
 
 | Item | Decisão do revisor | Observações |
 |---|---|---|
 | PD-1 | **Aprovado:** porta única (T1), sem Unit of Work exposto | — |
 | PD-2 | **Aprovado:** `UPDATE` condicional em ordem crescente de `id` | Já era decisão do autor |
-| PD-3 | **Mantido** (retry de deadlock até 3 vezes) | O revisor não tinha entendido bem o ponto e deixou seguir; vale uma explicação antes de dar por encerrado |
-| PD-4 | **Em discussão** | O autor entende que a infraestrutura não deveria implementar diretamente as interfaces de Application e que o caminho deveria passar por outras camadas. A discutir qual é o modelo desejado |
+| PD-3 | **Mantido** (retry de deadlock até 3 vezes) | — |
+| PD-4 | **Decidido (a implementar):** as interfaces ficam no **Domain**; a Application as utiliza; a Infrastructure as implementa | Hoje estão em `Application/Interfaces/`. **Ponto em aberto:** `IPedidoConsultas` devolve read models e recebe `FiltroPedidos`, que hoje vivem em Application; ao mover a interface, ou esses tipos vão junto, ou só `IPedidoRepositorio` vai para o Domain. Muda também o diagrama de dependências (a Infrastructure passaria a depender só do Domain) e o `CLAUDE.md` |
 | PD-5 | **Aprovado:** reaproveitar os read models na leitura | Evita código de mapeamento |
 | PD-6 | **Em discussão, com inclinação a mudar:** mover as validações para o Domain e deixar a Application só orquestrando | Tensão registrada em 0.4: as mensagens da RN-11 usam caminhos como `itens[0].quantidade`, que o domínio não conhece. Mudança de comportamento ou de estrutura começa pela spec |
 | PD-7 | **Aprovado:** SDK .NET 10 | — |
