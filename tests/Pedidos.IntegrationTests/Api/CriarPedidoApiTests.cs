@@ -122,6 +122,24 @@ public class CriarPedidoApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTest
         Assert.DoesNotContain("System.", corpo.ToString());
     }
 
+    [Trait("CA", "CA-03b")]
+    [Theory]
+    [InlineData("")]
+    [InlineData("{ json inválido")]
+    public async Task NaoAlteraNadaQuandoOCorpoEAusenteOuInvalido(string json)
+    {
+        var cliente = await banco.InserirClienteAsync();
+        var produto = await banco.InserirProdutoAsync(10m, estoque: 10);
+        var pedidosAntes = await banco.EscalarAsync<int>("SELECT COUNT(*) FROM dbo.pedido");
+
+        var resposta = await PostarAsync(json);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Equal(10, await banco.EstoqueAsync(produto));
+        Assert.Equal(pedidosAntes, await banco.EscalarAsync<int>("SELECT COUNT(*) FROM dbo.pedido"));
+        Assert.Equal(0, await ContarPedidosAsync(cliente));
+    }
+
     [Trait("CA", "CA-04")]
     [Fact]
     public async Task RetornaNaoEncontradoParaClienteInexistente()
