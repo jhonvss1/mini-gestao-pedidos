@@ -204,6 +204,27 @@ O enunciado traz uma query de ranking "lenta e incorreta". O relato completo, co
 
 Como investigar: gerar uma base de volume separada (`gestao_pedidos_volume`, ~500 mil pedidos), medir leituras lógicas e plano real da original e da corrigida, com e sem os índices de apoio, e provar a equivalência dos totais contra uma soma independente dos itens. **As medições ainda não foram executadas**: a tabela de evidências em `docs/investigacao-query.md` será preenchida com a saída bruta guardada em `database/investigacao/resultados/`.
 
+## Configuração AI First
+
+A configuração do Claude Code é versionada no repositório: [CLAUDE.md](CLAUDE.md) e a pasta [.claude/](.claude/).
+
+| Peça | Onde | O que faz |
+|---|---|---|
+| **Regras** | [CLAUDE.md](CLAUDE.md) | Arquitetura e direção das dependências, estrutura de pastas e nomenclatura, regras de ouro do domínio, regras do banco, comandos de build, testes, API, frontend e Docker, política de Git (commits pequenos, sem coautoria), segurança e definição de pronto |
+| **Permissões** | [.claude/settings.json](.claude/settings.json) | Comandos liberados (`dotnet build/test`, `docker compose up`, `git status`), os que pedem confirmação (`docker compose down`, `git push`) e a leitura do `.env`, negada |
+| **Hook de formatação** | [formatar-cs.ps1](.claude/hooks/formatar-cs.ps1) | Depois de editar um `.cs`, normaliza os espaços em branco com `dotnet format whitespace` |
+| **Hook de build** | [compilar-cs.ps1](.claude/hooks/compilar-cs.ps1) | Depois de editar um `.cs`, compila o projeto dono do arquivo e **devolve os erros ao Claude**, que corrige na hora. Usa `--artifacts-path .artifacts` para não colidir com a API local rodando |
+| **Hook de coautoria** | [bloquear-coautoria.ps1](.claude/hooks/bloquear-coautoria.ps1) | Antes de um `git commit`, recusa mensagem com trailer de coautoria. A regra do `CLAUDE.md` passa a ser imposta por mecanismo, não só por texto |
+| **Skill `criar-endpoint`** | [SKILL.md](.claude/skills/criar-endpoint/SKILL.md) | Passo a passo de um endpoint novo no padrão do projeto: spec primeiro, Application, Infrastructure, Api, testes com trait `CA` e documentação |
+| **Skill `verificar-ca`** | [SKILL.md](.claude/skills/verificar-ca/SKILL.md) | Monta a matriz critério de aceite x teste x resultado **executando** os testes, e nunca declara um critério verificado sem rodar |
+
+As skills são invocadas pelo nome (`/criar-endpoint`, `/verificar-ca`) ou o Claude as aciona sozinho quando o pedido combina com a descrição.
+
+### Como isso ajudou no desenvolvimento
+- O **hook de build** testado de propósito com um arquivo quebrado devolveu `CS1026` e `CS1002` ao Claude com código 2, sem precisar rodar o build à mão.
+- O **hook de coautoria** já mostrou valor (e um defeito): ele bloqueou um comando que apenas *citava* o termo na documentação. A regra inicial era ampla demais; foi corrigida para bloquear só o trailer de verdade (nome e e-mail entre `<>`) e testada com falsos positivos.
+- O **CLAUDE.md** concentra as decisões que se repetiam a cada etapa (pastas, nomes de teste, commits sem coautoria, nunca `down -v` em produção), de modo que cada etapa começou já seguindo o mesmo padrão.
+
 ## Recursos de C# e Angular usados
 
 Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem contra erro. Valem como referência de estudo.
