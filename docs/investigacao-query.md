@@ -1,6 +1,6 @@
 # Investigação da query do ranking (Parte 4 do enunciado)
 
-**Status: análise por leitura e medições concluídas** (2026-11-14, uma execução em SQL Server 2022 CU28 em container, 4 vCPU). As seções 1 a 3 vêm da leitura do SQL; a seção 5 só traz números copiados da saída bruta guardada em `database/investigacao/resultados/`. Limites da medição estão na seção 5.1.
+**Status: análise por leitura e medições concluídas (ranking e listagem)** (2026-11-14, uma execução em SQL Server 2022 CU28 em container, 4 vCPU). As seções 1 a 3 vêm da leitura do SQL; a seção 5 só traz números copiados da saída bruta guardada em `database/investigacao/resultados/`. Limites da medição estão na seção 5.1.
 
 ## 1. A query do enunciado e o que ela pretende
 
@@ -62,7 +62,8 @@ Usa `valor_total` (soma dos itens, RN-05) em vez de juntar `item_pedido`. A equi
 | H1 | `YEAR()` impede o `Seek` e causa varredura de `pedido` | **Confirmada** | Planos A e C: `Clustered Index Scan` e `Index Scan` sobre `pedido`, sem `Seek` (`resultado-06.txt`). A varredura lê o índice estreito (1895 leituras) em vez do clustered (2084), ganho pequeno |
 | H2 | Trocar `YEAR()` pela faixa, sozinho, reduz leituras lógicas | **Parcial** | C x D: `pedido` cai de 1895 para 906 leituras (-52%), mas o total quase não muda (8389 para 7400, -12%) porque `item_pedido` segue em 6418. CPU 348 para 283 ms; tempo total não melhorou (122 para 138 ms, dentro do ruído de 3 execuções) |
 | H3 | Agregar antes de juntar elimina as leituras de `item_pedido` | **Confirmada** | D x E: `item_pedido` de 6418 para 0 leituras; CPU 283 para 32 ms; total 7400 para 920 leituras |
-| H4 | Os índices de apoio reduzem as leituras da corrigida | **Confirmada para `ix_pedido_data_criacao_id`** | B x E: `pedido` de 1986 para 906 leituras (-54%), CPU 54 para 32 ms, `Index Seek` em `ix_pedido_data_criacao_id`. `ix_pedido_cliente_id_data_criacao_id` **não** é usado pela consulta corrigida (só pela original, em `Index Scan`); o benefício dele para `GET /api/pedidos?clienteId=` **não foi medido** |
+| H4 | Os índices de apoio reduzem as leituras da corrigida | **Confirmada** | B x E: `pedido` de 1986 para 906 leituras (-54%), CPU 54 para 32 ms, `Index Seek` em `ix_pedido_data_criacao_id`. `ix_pedido_cliente_id_data_criacao_id` **não** é usado pelo ranking; o benefício dele está na listagem (H7) |
+| H7 | `ix_pedido_cliente_id_data_criacao_id` reduz as leituras de `GET /api/pedidos` filtrado por cliente | **Confirmada** | `resultado-07.txt`, cliente 3634: contagem de 1806 para 3 leituras (CPU ~22 para ~0 ms); página de 317 para 3; cliente + período de 80 para 3 em cada consulta. Sem filtro de cliente não há diferença |
 | H5 | A original devolve linhas a menos e mostra os menores primeiro | **Confirmada** | Script 04: 4500 clientes com pedido em 2026, 4000 linhas na original (500 nomes fundidos); 500 clientes sem pedido não aparecem; as 5 primeiras linhas são as de menor total (2439,80 a 2516,40) |
 | H6 | `valor_total` é igual à soma dos itens em todos os pedidos | **Confirmada** | Script 04: 0 pedidos divergentes; `EXCEPT` nos dois sentidos devolve 0 linhas; soma geral 431.910.813,80 nas duas queries |
 
@@ -86,7 +87,7 @@ Original sem índices (A) contra corrigida com índices (E): de 8578 para 920 le
 - Dados sintéticos e determinísticos: 5000 clientes (4500 compram), 200 produtos, pedidos entre 2025-01-01 e 2026-12-31 (249.997 em 2026). A proporção entre os cenários depende dessa distribuição.
 - As consultas originais rodam em plano paralelo (4 threads); o tempo da corrigida é de um plano serial.
 - Não houve execução a frio (`DROP CLEANBUFFERS`).
-- O ganho dos índices foi medido no ranking. Para a listagem (`GET /api/pedidos`, com ou sem `clienteId`) **não há medição**; o índice por cliente segue como hipótese de projeto.
+- A medição da listagem (H7) usa um único cliente (3634) e uma única página (a primeira); páginas profundas e o custo extra de manter o índice em cada `INSERT` de pedido **não foram medidos**.
 
 ### Defeito encontrado no gerador de volume
 
@@ -156,5 +157,5 @@ Cuidado: os scripts 05 e 06 desabilitam e reconstroem os dois índices de apoio 
 Os índices de `pedido` nasceram como hipóteses de projeto (plano, seção 2.7). Com as evidências:
 
 - **`ix_pedido_data_criacao_id`: mantido.** O cenário E é melhor que o B (906 contra 1986 leituras em `pedido`; CPU 32 contra 54 ms) e o plano usa `Index Seek`.
-- **`ix_pedido_cliente_id_data_criacao_id`: mantido por ora.** A consulta do ranking não o usa, e a medição da listagem por cliente não foi feita. Antes de removê-lo (cada índice custa em todo `INSERT` de pedido), é preciso medir `GET /api/pedidos?clienteId=` com e sem ele.
+- **`ix_pedido_cliente_id_data_criacao_id`: mantido.** O ranking não o usa, mas a listagem filtrada por cliente depende dele (H7: de 1806 para 3 leituras na contagem). O custo dele em cada `INSERT` não foi medido.
 - qualquer mudança entra em `database/01-schema.sql` em commit à parte, citando esta investigação.

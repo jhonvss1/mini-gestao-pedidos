@@ -204,7 +204,7 @@ Mensagens descritivas em português, centralizadas numa classe (identificam camp
 | `uq_item_pedido_pedido_id_produto_id` | `(pedido_id, produto_id)` | integridade RN-09; busca dos itens por `pedido_id` na página | substitui o `ix_item_pedido_pedido_id` da spec 3.2 |
 | FK `item_pedido.produto_id` | sem índice dedicado | — | não há exclusão de produtos; **hipótese**, a confirmar pelo plano |
 
-Estes índices nasceram como **hipóteses de projeto**. **[atualizado]** A medição do ranking confirmou `ix_pedido_data_criacao_id` (`Index Seek`, 906 contra 1986 leituras em `pedido`); `ix_pedido_cliente_id_data_criacao_id` não é usado pelo ranking e a listagem por cliente **não foi medida**. A confirmação (planos de execução e leituras lógicas, com e sem índice, em base com volume) está na seção 7 e no E21. Custo conhecido: três índices a manter em cada `INSERT` de pedido.
+Estes índices nasceram como **hipóteses de projeto**. **[atualizado]** A medição do ranking confirmou `ix_pedido_data_criacao_id` (`Index Seek`, 906 contra 1986 leituras em `pedido`); `ix_pedido_cliente_id_data_criacao_id` não é usado pelo ranking, mas a listagem por cliente foi medida e depende dele (contagem de 1806 para 3 leituras). O custo de ambos no `INSERT` não foi medido. A confirmação (planos de execução e leituras lógicas, com e sem índice, em base com volume) está na seção 7 e no E21. Custo conhecido: três índices a manter em cada `INSERT` de pedido.
 
 ### 2.8 Seed
 Datas fixas e ids explícitos (`SET IDENTITY_INSERT`) para ranking reproduzível. Cobre os mínimos da spec 3.3 (≥ 7 clientes com 2 homônimos; ≥ 6 produtos, um com estoque 5 e um com 0; ≥ 6 clientes com pedidos no mesmo período; dois períodos; ao menos um empate de total; totais e preços coerentes com RN-05).
@@ -390,7 +390,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | — | **Fim dos obrigatórios** | todos os CA obrigatórios cobertos | — |
 | E19 | Skill `verificar-ca` + traits nos testes existentes — **feita** (skill em `.claude/skills/verificar-ca/`; CA-03b ganhou teste próprio) | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
 | E20 | **Não feita.** MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
-| E21 | **Feita para o ranking.** Investigação da query: volume, comparação, planos e medições concluídos; **falta** medir a listagem por cliente para decidir sobre `ix_pedido_cliente_id_data_criacao_id` | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
+| E21 | **Feita para o ranking.** Investigação da query: volume, comparação, planos e medições concluídos; a listagem por cliente também foi medida (`07-medir-listagem.sql`); **falta** só medir o custo dos índices no `INSERT` | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
 | E22 | (Opcional) testes de frontend e revisão final do plano — **não feita**; PD-13 mantém o roteiro manual | — | `test(frontend): ...` / `docs: atualiza plano` |
 
 ### Entregas posteriores ao plano original
@@ -424,7 +424,7 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 | PD-11 | MCP de SQL | DAB SQL MCP Server; servidores comunitários | **DAB** (oficial, somente entidades, somente leitura configurável); planos e estatísticas via `sqlcmd` | Preview; sem SQL livre; sintaxe de integração com Claude Code a confirmar |
 | PD-12 | Hook | formatação de `.cs`; barrar commit com coautoria | **Formatação**; o outro fica como opção | — |
 | PD-13 | Testes de frontend | só roteiro manual; testes de componente | **Roteiro manual** (spec não pede automatizados) | Regressões visuais não detectadas |
-| PD-14 | Índices | conjunto da 2.7; adiar até medir | **Criar o conjunto mínimo** e revisar com evidências (E21). **[atualizado]** Um dos dois foi confirmado pela medição; o outro segue sem medição na listagem | O índice por cliente custa em todo `INSERT` sem benefício medido |
+| PD-14 | Índices | conjunto da 2.7; adiar até medir | **Criar o conjunto mínimo** e revisar com evidências (E21). **[atualizado]** Os dois foram confirmados pela medição (ranking e listagem por cliente) | O custo dos índices em cada `INSERT` de pedido não foi medido |
 | PD-15 | Modelo de resposta | resultado único + contrato da spec; contrato unificado `erros[]` (altera a spec 4.1); tipos de falha distintos | **Resultado único + contrato da spec (decidido pelo autor)**: notificação acumulada em Application, spec intacta; no frontend, serviço de erros por tela | Mapeamento extra na Api; `Dados` do erro exige convenção por código |
 | PD-16 | Tradução dos nomes do banco (snake_case, singular) | Mapeamento Fluent explícito; pacote `EFCore.NamingConventions` | **Explícito**: 4 tabelas, sem dependência extra, e o teste de deriva de schema detecta divergência | Mais linhas de configuração; esquecer uma coluna é pego pelo teste |
 
