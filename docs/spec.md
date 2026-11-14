@@ -23,12 +23,12 @@ Aplicação de mini gestão de pedidos que permite registrar pedidos de clientes
 - Entidades Cliente, Produto, Pedido e ItemPedido (tabelas `cliente`, `produto`, `pedido` e `item_pedido`).
 - `POST /pedidos`, `GET /pedidos`, `GET /relatorios/top-clientes`.
 - Endpoints auxiliares de leitura `GET /clientes` e `GET /produtos` (somente para alimentar o frontend) **[D-5]**.
-- Frontend com listagem de pedidos, filtros e criação de pedido.
+- Frontend com listagem de pedidos, filtros, criação de pedido e tela do ranking dos cinco maiores clientes **[D-22]**.
 - Scripts SQL de criação e carga inicial.
 - Testes unitários e de integração.
 
 ### 1.4 Fora do escopo
-Autenticação/autorização; CRUD de clientes e produtos; edição, cancelamento ou exclusão de pedidos; consulta de pedido por id; pagamento, frete, descontos, impostos; multi-moeda; tela do relatório top-clientes **[D-14]**; internacionalização.
+Autenticação/autorização; CRUD de clientes e produtos; edição, cancelamento ou exclusão de pedidos; consulta de pedido por id; pagamento, frete, descontos, impostos; multi-moeda; internacionalização.
 
 ---
 
@@ -293,6 +293,7 @@ Somente leitura, sem filtros nem paginação, para os seletores do frontend:
 ## 5. Frontend (comportamento esperado)
 - **Listagem:** tabela de pedidos (id, cliente, data, valor total, itens), filtros por cliente, data inicial e data final, paginação com total, ordenação conforme RN-16, estados de carregando/vazio/erro.
 - **Criação:** formulário com seleção de cliente e lista dinâmica de itens (produto + quantidade, adicionar/remover linha); impede envio com zero itens ou quantidade ≤ 0 (validação de conveniência — a API continua sendo a autoridade); exibe o total estimado a partir do preço do cadastro, informando que o valor final é o do servidor; mostra mensagens de erro da API (400/404/422/409, inclusive produtos sem estoque); após sucesso, **limpa os filtros, volta à primeira página e atualiza a listagem**, de modo que o novo pedido fique visível **[D-18]**.
+- **Ranking de clientes [D-22]:** tela própria com o período (data inicial e data final, obrigatórias; ao abrir vem preenchido do primeiro dia do mês corrente até hoje) e a lista dos até 5 clientes com maior valor total: posição, nome, id (para distinguir homônimos, RN-19), total em reais e uma barra proporcional ao maior total. Valida `dataInicio ≤ dataFim` antes de consultar e tem estados de carregando, vazio e erro com nova tentativa.
 - **Filtro de datas:** valida `dataInicio ≤ dataFim` antes de consultar.
 
 ---
@@ -366,6 +367,9 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | CA-38 | Listagem exibe pedidos, aplica cada filtro e navega entre páginas refletindo o total. |
 | CA-39 | Não é possível enviar pedido sem itens ou com quantidade ≤ 0; erros 404/409/422 da API aparecem de forma legível, sem perder o preenchimento do formulário. |
 | CA-40 | Após criar um pedido com filtros ativos (ex.: outro cliente ou período), os filtros são limpos, a listagem volta à página 1 e o pedido novo aparece no topo; o estoque atualizado é refletido ao reabrir o formulário. |
+| CA-43 | Ranking: a tela exibe, para o período informado, até 5 clientes em ordem decrescente de total, com posição, nome, id e total em reais; dois clientes homônimos aparecem como linhas distintas. |
+| CA-44 | O período do ranking é obrigatório e validado: sem data, ou com data inicial posterior à final, a tela mostra o erro e não consulta; ao abrir, vem preenchido com o mês corrente. |
+| CA-45 | Sem pedidos no período, a tela do ranking mostra a mensagem de lista vazia; se a API falhar, mostra o erro com "Tentar novamente". |
 
 ### Testes
 | ID | Critério |
@@ -392,7 +396,7 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | D-11 | Fuso horário | UTC | Evita ambiguidade. |
 | D-12 | `GET /pedidos/{id}` / `Location` | Não incluir | Fora dos requisitos. |
 | D-13 | Atributos de Cliente | Apenas `Id` e `Nome` | Não inventar requisito. |
-| D-14 | Tela do top-clientes | Fora do escopo | Frontend pedido cita só listagem, filtros e criação. |
+| D-14 | Tela do top-clientes | Fora do escopo; **revista pela D-22** | O frontend pedido cita só listagem, filtros e criação. |
 | D-15 | Validação do `POST /pedidos` | Em etapas, interrompendo na primeira com falhas e agrupando os erros dela | Mensagens mais descritivas e comportamento previsível. |
 | D-16 | Garantias de atomicidade | Restritas à própria requisição antes do commit; `5xx`/falha de comunicação sem garantia | Outras requisições concorrentes alteram o banco, `identity` pode ter lacunas e a conexão pode cair após o commit. |
 | D-17 | `DataPedido` vs `DataCriacao` | Mantido `DataCriacao` (coluna `data_criacao`), com correspondência registrada no README | Escolha do modelo; evita ambiguidade para quem compara com o enunciado. |
@@ -400,3 +404,4 @@ Notação: **Dado / Quando / Então**. Os critérios de API e banco são coberto
 | D-19 | Nomes no banco | Tabelas no singular e colunas em snake_case (`cliente`, `produto`, `pedido`, `item_pedido`; `data_criacao`, `valor_total`...) | Padrão definido pelo autor; atributos em PascalCase e JSON em camelCase são traduzidos no mapeamento. |
 | D-20 | Prefixo das rotas | Todos os endpoints sob `/api` (`/api/pedidos`, `/api/relatorios/top-clientes`, `/api/clientes`, `/api/produtos`) | Padrão definido pelo autor; os caminhos das seções 4 e 6 são relativos ao prefixo. O frontend e o proxy usam o mesmo prefixo, sem reescrita. |
 | D-21 | Saúde da API | `GET /api/saude` consulta o banco (200 ou 503) | Healthcheck que reflete a dependência real, em vez de só testar a porta. |
+| D-22 | Tela do ranking | Incluída: rota própria, período obrigatório e padrão no mês corrente | Pedido do autor após a publicação: o relatório existia só na API e não aparecia na tela. Revisa a D-14. |
