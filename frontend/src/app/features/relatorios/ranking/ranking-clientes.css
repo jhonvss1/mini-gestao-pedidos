@@ -1,0 +1,146 @@
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+.cabecalho h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subtitulo {
+  margin: var(--espaco-1) 0 0;
+  color: var(--texto-suave);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  min-width: 11rem;
+}
+
+.erro {
+  margin: 0;
+}
+
+.linha-inteira {
+  flex-basis: 100%;
+}
+
+.estado {
+  padding: var(--espaco-4);
+  text-align: center;
+  color: var(--texto-suave);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.estado.com-erro {
+  color: var(--erro);
+  border-color: var(--erro);
+}
+
+.periodo {
+  margin: 0;
+  color: var(--texto-suave);
+}
+
+.lista-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: 3rem 1fr auto;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.linha.primeiro {
+  border-color: var(--primaria);
+}
+
+.posicao {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.primeiro .posicao {
+  color: var(--primaria);
+}
+
+.dados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+  min-width: 0;
+}
+
+.identificacao {
+  display: flex;
+  align-items: baseline;
+  gap: var(--espaco-2);
+}
+
+.nome {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.id {
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
+}
+
+.barra {
+  height: 0.5rem;
+  overflow: hidden;
+  background: var(--fundo);
+  border-radius: 999px;
+}
+
+.preenchimento {
+  height: 100%;
+  background: var(--primaria);
+  border-radius: 999px;
+}
+
+.total {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 36rem) {
+  .linha {
+    grid-template-columns: 2.25rem 1fr;
+  }
+
+  .total {
+    grid-column: 2;
+  }
+}

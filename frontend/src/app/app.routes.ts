@@ -11,5 +11,10 @@ export const routes: Routes = [
     path: 'pedidos/novo',
     loadComponent: () => import('./features/pedidos/criar/pedido-criar').then((m) => m.PedidoCriar),
   },
+  {
+    path: 'ranking',
+    loadComponent: () =>
+      import('./features/relatorios/ranking/ranking-clientes').then((m) => m.RankingClientes),
+  },
   { path: '**', redirectTo: 'pedidos' },
 ];

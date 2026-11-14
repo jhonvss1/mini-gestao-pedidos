@@ -1,0 +1,66 @@
+<section class="ranking">
+  <header class="cabecalho">
+    <h1>Ranking de clientes</h1>
+    <p class="subtitulo">Os cinco clientes com maior valor total de pedidos no período.</p>
+  </header>
+
+  <form class="filtros" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+    <div class="campo">
+      <label for="ranking-inicio">Data inicial</label>
+      <input id="ranking-inicio" type="date" formControlName="dataInicio" />
+      @if (form.controls.dataInicio.invalid && form.controls.dataInicio.touched) {
+        <p class="erro">Informe a data inicial.</p>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="ranking-fim">Data final</label>
+      <input id="ranking-fim" type="date" formControlName="dataFim" />
+      @if (form.controls.dataFim.invalid && form.controls.dataFim.touched) {
+        <p class="erro">Informe a data final.</p>
+      }
+    </div>
+
+    <button type="submit" class="primario">Consultar</button>
+
+    @if (erroIntervalo(); as mensagem) {
+      <p class="erro linha-inteira" role="alert">{{ mensagem }}</p>
+    }
+  </form>
+
+  @let atual = estado();
+
+  @if (atual.tipo === 'carregando') {
+    <p class="estado" role="status">Carregando ranking…</p>
+  } @else if (atual.tipo === 'erro') {
+    <div class="estado com-erro" role="alert">
+      <p>{{ atual.erro.mensagem }}</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
+  } @else if (atual.tipo === 'vazio') {
+    <p class="estado" role="status">Nenhum pedido no período informado.</p>
+  } @else {
+    <p class="periodo">
+      Período de <strong>{{ dataBr(periodo().dataInicio) }}</strong> a
+      <strong>{{ dataBr(periodo().dataFim) }}</strong>
+    </p>
+
+    <ol class="lista-ranking">
+      @for (cliente of atual.clientes; track cliente.clienteId; let i = $index) {
+        <li class="linha" [class.primeiro]="i === 0">
+          <span class="posicao" aria-label="Posição {{ i + 1 }}">{{ i + 1 }}º</span>
+          <div class="dados">
+            <div class="identificacao">
+              <span class="nome">{{ cliente.nome }}</span>
+              <span class="id">#{{ cliente.clienteId }}</span>
+            </div>
+            <div class="barra" aria-hidden="true">
+              <div class="preenchimento" [style.width.%]="percentual(cliente)"></div>
+            </div>
+          </div>
+          <span class="total">{{ cliente.valorTotal | moeda }}</span>
+        </li>
+      }
+    </ol>
+  }
+</section>
