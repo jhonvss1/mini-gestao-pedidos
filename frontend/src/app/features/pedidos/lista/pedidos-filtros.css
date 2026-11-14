@@ -7,13 +7,15 @@
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  box-shadow: var(--sombra);
 }
 
 .campo {
   display: flex;
   flex-direction: column;
   gap: var(--espaco-1);
-  min-width: 11rem;
+  flex: 1 1 11rem;
+  max-width: 16rem;
 }
 
 .acoes {

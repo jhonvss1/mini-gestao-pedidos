@@ -1,5 +1,8 @@
 <section class="lista">
-  <h1>Pedidos</h1>
+  <header class="cabecalho-pagina">
+    <h1>Pedidos</h1>
+    <p class="subtitulo">Acompanhe os pedidos e filtre por cliente e período.</p>
+  </header>
 
   @if (aviso(); as mensagem) {
     <p class="sucesso" role="status">{{ mensagem }}</p>
@@ -27,33 +30,38 @@
       </p>
     } @else {
       <div class="tabela-rolavel">
-        <table>
+        <table role="table">
           <thead>
-            <tr>
-              <th>Pedido</th>
-              <th>Cliente</th>
-              <th>Data</th>
-              <th>Itens</th>
-              <th class="numerico">Total</th>
+            <tr role="row">
+              <th role="columnheader">Pedido</th>
+              <th role="columnheader">Cliente</th>
+              <th role="columnheader">Data</th>
+              <th role="columnheader">Itens</th>
+              <th role="columnheader" class="numerico">Total</th>
             </tr>
           </thead>
           <tbody>
             @for (pedido of atual.pagina.registros; track pedido.id) {
-              <tr>
-                <td>#{{ pedido.id }}</td>
-                <td>{{ pedido.clienteNome }}</td>
-                <td>{{ pedido.dataCriacao | dataHora }}</td>
-                <td>
+              <tr role="row">
+                <td role="cell" data-label="Pedido" class="codigo">#{{ pedido.id }}</td>
+                <td role="cell" data-label="Cliente">{{ pedido.clienteNome }}</td>
+                <td role="cell" data-label="Data" class="data">
+                  {{ pedido.dataCriacao | dataHora }}
+                </td>
+                <td role="cell" data-label="Itens">
                   <ul class="itens">
                     @for (item of pedido.itens; track item.produtoId) {
                       <li>
-                        {{ item.quantidade }} × {{ item.produtoNome }}
+                        <span class="quantidade">{{ item.quantidade }} ×</span>
+                        {{ item.produtoNome }}
                         <span class="suave">({{ item.precoUnitario | moeda }} cada)</span>
                       </li>
                     }
                   </ul>
                 </td>
-                <td class="numerico">{{ pedido.valorTotal | moeda }}</td>
+                <td role="cell" data-label="Total" class="numerico">
+                  {{ pedido.valorTotal | moeda }}
+                </td>
               </tr>
             }
           </tbody>

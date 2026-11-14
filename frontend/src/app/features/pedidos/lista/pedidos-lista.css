@@ -4,11 +4,6 @@
   gap: var(--espaco-3);
 }
 
-h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
 .estado {
   padding: var(--espaco-4);
   text-align: center;
@@ -16,6 +11,7 @@ h1 {
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  box-shadow: var(--sombra);
 }
 
 .estado.erro {
@@ -23,11 +19,41 @@ h1 {
   border-color: var(--erro);
 }
 
+.estado.erro p {
+  margin: 0 0 var(--espaco-3);
+}
+
+.sucesso {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  margin: 0;
+  padding: var(--espaco-3);
+  background: color-mix(in srgb, var(--sucesso) 12%, var(--superficie));
+  border: 1px solid color-mix(in srgb, var(--sucesso) 45%, var(--borda));
+  border-radius: var(--raio);
+}
+
+.sucesso::before {
+  content: '✓';
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--sucesso);
+  border-radius: 50%;
+}
+
 .tabela-rolavel {
   overflow-x: auto;
+  background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
-  background: var(--superficie);
+  box-shadow: var(--sombra);
 }
 
 table {
@@ -35,9 +61,20 @@ table {
   border-collapse: collapse;
 }
 
-th,
-td {
+th {
   padding: var(--espaco-2) var(--espaco-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  background: var(--superficie-2);
+  border-bottom: 1px solid var(--borda);
+}
+
+td {
+  padding: var(--espaco-3);
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--borda);
@@ -47,27 +84,116 @@ tbody tr:last-child td {
   border-bottom: 0;
 }
 
+tbody tr:hover {
+  background: var(--superficie-2);
+}
+
+.codigo,
+.data,
+.numerico {
+  font-variant-numeric: tabular-nums;
+}
+
+.codigo {
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.data {
+  white-space: nowrap;
+  color: var(--texto-suave);
+}
+
 th.numerico,
 td.numerico {
   text-align: right;
   white-space: nowrap;
 }
 
+td.numerico {
+  font-weight: 700;
+}
+
 .itens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.quantidade {
+  font-weight: 600;
 }
 
 .suave {
   color: var(--texto-suave);
 }
 
-.sucesso {
-  margin: 0;
-  padding: var(--espaco-3);
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--primaria);
-  border-radius: var(--raio);
+/* No celular cada pedido vira um cartão, com o nome da coluna ao lado de cada valor. */
+@media (max-width: 48rem) {
+  .tabela-rolavel {
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+  }
+
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espaco-3);
+  }
+
+  tbody tr {
+    padding: var(--espaco-1) var(--espaco-3);
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+  }
+
+  tbody tr:hover {
+    background: var(--superficie);
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: var(--espaco-2);
+    padding: var(--espaco-2) 0;
+  }
+
+  td:last-child {
+    border-bottom: 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  td.numerico {
+    text-align: left;
+  }
 }
