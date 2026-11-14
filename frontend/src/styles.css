@@ -1,13 +1,20 @@
 :root {
-  --fundo: #f4f6f8;
+  /* Faz os controles nativos (seletor de data, select, rolagem) acompanharem o tema claro ou escuro. */
+  color-scheme: light dark;
+
+  --fundo: #f3f5f9;
   --superficie: #ffffff;
-  --borda: #d7dde3;
-  --texto: #1f2933;
-  --texto-suave: #5f6c7b;
-  --primaria: #1d5fd1;
+  --superficie-2: #f7f9fc;
+  --borda: #dfe4ec;
+  --texto: #1b2430;
+  --texto-suave: #5b6677;
+  --primaria: #2457d6;
+  --primaria-hover: #1b46b0;
   --primaria-texto: #ffffff;
   --erro: #b42318;
-  --raio: 0.5rem;
+  --sucesso: #12794f;
+  --sombra: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+  --raio: 0.625rem;
   --espaco-1: 0.25rem;
   --espaco-2: 0.5rem;
   --espaco-3: 1rem;
@@ -16,14 +23,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #12161b;
-    --superficie: #1b2129;
-    --borda: #34404d;
-    --texto: #e6ebf0;
-    --texto-suave: #a3afbc;
-    --primaria: #6aa2ff;
-    --primaria-texto: #0b1220;
-    --erro: #ff8a80;
+    --fundo: #0f1318;
+    --superficie: #171d25;
+    --superficie-2: #1d2530;
+    --borda: #2c3744;
+    --texto: #e8edf3;
+    --texto-suave: #9aa8b8;
+    --primaria: #6ea0ff;
+    --primaria-hover: #8ab4ff;
+    --primaria-texto: #0a1220;
+    --erro: #ff8f86;
+    --sucesso: #4cd699;
+    --sombra: none;
   }
 }
 
@@ -39,12 +50,34 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
+  line-height: 1.5;
   color: var(--texto);
   background: var(--fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.625rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+/* Cabeçalho padrão das páginas: título e uma linha de apoio. */
+.cabecalho-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+}
+
+.subtitulo {
+  margin: 0;
+  color: var(--texto-suave);
 }
 
 label {
   font-size: 0.875rem;
+  font-weight: 500;
   color: var(--texto-suave);
 }
 
@@ -52,21 +85,42 @@ input,
 select,
 button {
   font: inherit;
+  min-height: 2.5rem;
   padding: var(--espaco-2) var(--espaco-3);
   color: var(--texto);
   background: var(--superficie);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+input:hover,
+select:hover {
+  border-color: color-mix(in srgb, var(--texto-suave) 55%, var(--borda));
 }
 
 button {
   cursor: pointer;
+  font-weight: 500;
+}
+
+button:hover:not(:disabled) {
+  background: var(--superficie-2);
+  border-color: color-mix(in srgb, var(--texto-suave) 55%, var(--borda));
 }
 
 button.primario {
   color: var(--primaria-texto);
   background: var(--primaria);
   border-color: var(--primaria);
+}
+
+button.primario:hover:not(:disabled) {
+  background: var(--primaria-hover);
+  border-color: var(--primaria-hover);
 }
 
 button:disabled {
@@ -81,4 +135,15 @@ button:disabled {
 
 .erro {
   color: var(--erro);
+}
+
+p.erro {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

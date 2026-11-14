@@ -1,36 +1,81 @@
 .topo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--espaco-3);
-  padding: var(--espaco-3) var(--espaco-4);
+  gap: var(--espaco-2) var(--espaco-3);
+  padding: var(--espaco-2) var(--espaco-4);
   background: var(--superficie);
   border-bottom: 1px solid var(--borda);
+  box-shadow: var(--sombra);
 }
 
 .marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-size: 1.0625rem;
   font-weight: 700;
   color: var(--texto);
   text-decoration: none;
 }
 
+.marca::before {
+  content: 'G';
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primaria-texto);
+  background: var(--primaria);
+  border-radius: 0.5rem;
+}
+
 nav {
   display: flex;
-  gap: var(--espaco-3);
+  flex-wrap: wrap;
+  gap: var(--espaco-1);
 }
 
 nav a {
+  padding: 0.4rem 0.85rem;
+  font-weight: 500;
   color: var(--texto-suave);
   text-decoration: none;
+  border-radius: 999px;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+nav a:hover {
+  color: var(--texto);
+  background: var(--superficie-2);
 }
 
 nav a.ativo {
-  color: var(--primaria);
   font-weight: 600;
+  color: var(--primaria);
+  background: color-mix(in srgb, var(--primaria) 14%, transparent);
 }
 
 .conteudo {
   max-width: 72rem;
   margin: 0 auto;
   padding: var(--espaco-4);
+}
+
+@media (max-width: 36rem) {
+  .topo {
+    padding: var(--espaco-2) var(--espaco-3);
+  }
+
+  .conteudo {
+    padding: var(--espaco-3);
+  }
 }
