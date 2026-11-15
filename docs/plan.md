@@ -407,7 +407,7 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 
 ---
 
-## 9. Decisões para revisão
+## 9. Decisões e revisão
 
 | # | Decisão | Alternativas | Recomendação e justificativa | Risco |
 |---|---|---|---|---|
