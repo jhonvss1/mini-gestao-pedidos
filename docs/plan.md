@@ -414,9 +414,9 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 | PD-1 | Fronteira da transação | T1 função de decisão; T2 sessão (UoW); T3 EF em Application | **T1**: preserva a regra de dependência e a regra no Domain sem expor Unit of Work | Indireção; dublê de teste menos óbvio |
 | PD-2 | Mecanismo de concorrência | A `UPDLOCK` ordenado; B `rowversion`; C `UPDATE` condicional; D `SERIALIZABLE`/applock | **C (decidido pelo autor)**: atômico, sem retry de conflito, sem mudar o schema, locks curtos | Comparação de estoque também no SQL (duplicação consciente); precisa de nova leitura após 0 linhas afetadas para a mensagem completa |
 | PD-3 | Retry de deadlock | sem retry; retry 3× | **3×**, como defesa; a ordem crescente é o mecanismo principal | Mascarar um defeito de ordenação; o teste que desliga o retry evita isso |
-| PD-4 | Interfaces de Application | duas portas; uma só | **Duas** (escrita e leitura) por consumidores e dublês distintos | Unificar fica a critério do revisor |
+| PD-4 | **Mantido como está:** as interfaces seguem em `Application/Interfaces/`, implementadas pela Infrastructure | Chegou a ser decidida a ida das interfaces para o Domain, mas o autor voltou atrás antes de qualquer alteração. A discussão deixou em aberto, caso volte, que `IPedidoConsultas` depende de read models e de `FiltroPedidos`, hoje em Application |
 | PD-5 | Contratos de resposta | reusar read models de Application; DTOs próprios na Api | **Reusar** na leitura (formato idêntico à spec) e mapear só a resposta do `POST`; criar DTOs de Api se divergirem | Acoplamento do contrato ao modelo de leitura |
-| PD-6 | Onde fica a validação da etapa 1 | Application; Domain | **Application** (mensagens com caminho), guardas no Domain | Duplicação de regras simples |
+| PD-6 | **Mantido como está:** a validação da etapa 1 segue em Application (`ValidadorCriarPedido`), com as guardas no Domain | Foi considerada a alternativa de mover as regras para o Domain, devolvendo as violações com o índice do item e deixando a Application só traduzir para `itens[i].campo`. O autor optou por não mudar agora. A duplicação de regras simples registrada em 0.4 continua assumida |
 | PD-7 | SDK .NET | instalar SDK 10; usar SDK 11 com alvo `net10.0` | **SDK 10**, igual às imagens Docker | Instalação é ação do desenvolvedor (altera o sistema) |
 | PD-8 | Senha do SA no Compose | padrão de desenvolvimento no `compose`; exigir `.env` | **Padrão de dev + `.env.example`**, para `up` sem passos | Credencial padrão no repositório; só local |
 | PD-9 | Healthcheck da API | TCP; endpoint `/health` | ~~TCP~~ **[atualizado] `GET /api/saude`** (D-21): a recomendação inicial era TCP, mas o endpoint que consulta o banco prova a dependência real e foi adotado | Endpoint fora do contrato de negócio; a requisição usa `/dev/tcp` por falta de `curl` na imagem |
@@ -430,7 +430,7 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 
 ### Revisão humana
 
-**Status: parcial.** 15 itens decididos pelo autor; **PD-6 está em discussão**. O PD-4 foi decidido, mas ainda **não implementado**: ele muda a arquitetura e, pelo `CLAUDE.md`, a mudança começa pela spec e pelo plano (nenhuma mudança de código foi feita). Registro de 2026-11-14.
+**Status: concluída.** 16 itens decididos pelo autor. PD-4 e PD-6 foram discutidos e **mantidos como estão** (decisão de 2026-11-15); nenhuma mudança de código ou de estrutura foi feita por causa deles.
 
 | Item | Decisão do revisor | Observações |
 |---|---|---|
