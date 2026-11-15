@@ -1,6 +1,6 @@
 # Investigação da query do ranking (Parte 4 do enunciado)
 
-**Status: análise por leitura concluída; medições pendentes.** As seções 1 a 3 vêm da leitura do SQL. A seção 5 (evidências) só recebe números copiados da saída bruta guardada em `database/investigacao/resultados/`. Nada ali é conclusão até estar preenchido com a medição anexada.
+**Status: análise por leitura e medições concluídas (ranking e listagem)** (2026-11-14, uma execução em SQL Server 2022 CU28 em container, 4 vCPU). As seções 1 a 3 vêm da leitura do SQL; a seção 5 só traz números copiados da saída bruta guardada em `database/investigacao/resultados/`. Limites da medição estão na seção 5.1.
 
 ## 1. A query do enunciado e o que ela pretende
 
@@ -55,37 +55,43 @@ Usa `valor_total` (soma dos itens, RN-05) em vez de juntar `item_pedido`. A equi
 
 ## 5. Hipóteses e evidências
 
-### Hipóteses (a confirmar ou refutar pelas medições)
+### Hipóteses e veredito
 
-| # | Hipótese | Como testar |
-|---|---|---|
-| H1 | `YEAR()` impede o `Seek` e causa varredura de `pedido` | Plano do cenário C (Scan) e leituras do D (só a faixa de datas) |
-| H2 | Trocar `YEAR()` pela faixa, sozinho, reduz leituras lógicas | Comparar C x D |
-| H3 | Agregar antes de juntar reduz leituras de `item_pedido` (a corrigida nem lê a tabela de itens) | Comparar D x E |
-| H4 | Os índices de apoio reduzem as leituras da corrigida | Comparar B x E |
-| H5 | A original devolve linhas a menos que `clientes com pedido em 2026` (homônimos fundidos) e mostra os menores primeiro | Script 04, itens 4, 6 e 7 |
-| H6 | `valor_total` é igual à soma dos itens em todos os pedidos | Script 04, itens 1 a 3 |
+| # | Hipótese | Veredito | Evidência |
+|---|---|---|---|
+| H1 | `YEAR()` impede o `Seek` e causa varredura de `pedido` | **Confirmada** | Planos A e C: `Clustered Index Scan` e `Index Scan` sobre `pedido`, sem `Seek` (`resultado-06.txt`). A varredura lê o índice estreito (1895 leituras) em vez do clustered (2084), ganho pequeno |
+| H2 | Trocar `YEAR()` pela faixa, sozinho, reduz leituras lógicas | **Parcial** | C x D: `pedido` cai de 1895 para 906 leituras (-52%), mas o total quase não muda (8389 para 7400, -12%) porque `item_pedido` segue em 6418. CPU 348 para 283 ms; tempo total não melhorou (122 para 138 ms, dentro do ruído de 3 execuções) |
+| H3 | Agregar antes de juntar elimina as leituras de `item_pedido` | **Confirmada** | D x E: `item_pedido` de 6418 para 0 leituras; CPU 283 para 32 ms; total 7400 para 920 leituras |
+| H4 | Os índices de apoio reduzem as leituras da corrigida | **Confirmada** | B x E: `pedido` de 1986 para 906 leituras (-54%), CPU 54 para 32 ms, `Index Seek` em `ix_pedido_data_criacao_id`. `ix_pedido_cliente_id_data_criacao_id` **não** é usado pelo ranking; o benefício dele está na listagem (H7) |
+| H7 | `ix_pedido_cliente_id_data_criacao_id` reduz as leituras de `GET /api/pedidos` filtrado por cliente | **Confirmada** | `resultado-07.txt`, cliente 3634: contagem de 1806 para 3 leituras (CPU ~22 para ~0 ms); página de 317 para 3; cliente + período de 80 para 3 em cada consulta. Sem filtro de cliente não há diferença |
+| H5 | A original devolve linhas a menos e mostra os menores primeiro | **Confirmada** | Script 04: 4500 clientes com pedido em 2026, 4000 linhas na original (500 nomes fundidos); 500 clientes sem pedido não aparecem; as 5 primeiras linhas são as de menor total (2439,80 a 2516,40) |
+| H6 | `valor_total` é igual à soma dos itens em todos os pedidos | **Confirmada** | Script 04: 0 pedidos divergentes; `EXCEPT` nos dois sentidos devolve 0 linhas; soma geral 431.910.813,80 nas duas queries |
 
-### Evidências (a preencher com a saída anexada)
+Saídas brutas: [`resultado-04.txt`](../database/investigacao/resultados/resultado-04.txt) (resultados), [`resultado-05.txt`](../database/investigacao/resultados/resultado-05.txt) (leituras e tempo) e [`resultado-06.txt`](../database/investigacao/resultados/resultado-06.txt) (planos).
 
-| # | Resultado medido | Arquivo com a saída bruta |
-|---|---|---|
-| H1 | _pendente_ | `resultados/` |
-| H2 | _pendente_ | `resultados/` |
-| H3 | _pendente_ | `resultados/` |
-| H4 | _pendente_ | `resultados/` |
-| H5 | _pendente_ | `resultados/` |
-| H6 | _pendente_ | `resultados/` |
+### Medições (mediana de 3 execuções, cache aquecido, 500 mil pedidos e 1,5 milhão de itens)
 
-Tabela de cenários (preencher a partir de `05-medir.sql`, mediana de 3 execuções com cache aquecido):
-
-| Cenário | Índices de apoio | Query | Leituras lógicas (`pedido` / `item_pedido`) | Tempo de CPU | Tempo total | Operador em `pedido` |
+| Cenário | Índices de apoio | Query | Leituras lógicas `pedido` / `item_pedido` | CPU | Tempo total | Operador em `pedido` |
 |---|---|---|---|---|---|---|
-| A | não | original | _pendente_ | _pendente_ | _pendente_ | _pendente_ |
-| B | não | corrigida | _pendente_ | _pendente_ | _pendente_ | _pendente_ |
-| C | sim | original | _pendente_ | _pendente_ | _pendente_ | _pendente_ |
-| D | sim | original com faixa de datas | _pendente_ | _pendente_ | _pendente_ | _pendente_ |
-| E | sim | corrigida | _pendente_ | _pendente_ | _pendente_ | _pendente_ |
+| A | não | original | 2084 / 6418 | 352 ms | 117 ms | Clustered Index Scan |
+| B | não | corrigida | 1986 / 0 | 54 ms | 57 ms | Clustered Index Scan (filtro de datas) |
+| C | sim | original | 1895 / 6418 | 348 ms | 122 ms | Index Scan em `ix_pedido_cliente_id_data_criacao_id` (sem Seek) |
+| D | sim | original com faixa de datas | 906 / 6418 | 283 ms | 138 ms | não capturado (o script 06 não gera o plano do cenário D) |
+| E | sim | corrigida | 906 / 0 | 32 ms | 32 ms | Index Seek em `ix_pedido_data_criacao_id` |
+
+Original sem índices (A) contra corrigida com índices (E): de 8578 para 920 leituras lógicas no total (-89%), CPU de 352 para 32 ms e tempo de 117 para 32 ms.
+
+### 5.1 Limites da medição
+
+- Uma única máquina (container, 4 vCPU), cache aquecido, três execuções por cenário: o tempo oscila alguns ms (no cenário D o tempo total ficou acima do C só por ruído); as **leituras lógicas** são a métrica confiável.
+- Dados sintéticos e determinísticos: 5000 clientes (4500 compram), 200 produtos, pedidos entre 2025-01-01 e 2026-12-31 (249.997 em 2026). A proporção entre os cenários depende dessa distribuição.
+- As consultas originais rodam em plano paralelo (4 threads); o tempo da corrigida é de um plano serial.
+- Não houve execução a frio (`DROP CLEANBUFFERS`).
+- A medição da listagem (H7) usa um único cliente (3634) e uma única página (a primeira); páginas profundas e o custo extra de manter o índice em cada `INSERT` de pedido **não foram medidos**.
+
+### Defeito encontrado no gerador de volume
+
+Na primeira execução, o gerador distribuía a data com `CHECKSUM(n)`, que para inteiros sequenciais concentra os valores no começo do intervalo: os 500 mil pedidos caíram entre 2025-01-01 e 2025-01-06 e **nenhum pedido era de 2026**, o que tornaria qualquer medição sem sentido (a query filtra 2026). Foi trocado por um hash multiplicativo determinístico em `01-gerar-volume.sql`, e a base foi regenerada antes de todas as medições acima.
 
 ## 6. Roteiro de execução (ambiente de desenvolvimento)
 
@@ -135,6 +141,8 @@ docker compose cp db:/tmp/resultado-06.txt database/investigacao/resultados/resu
 
 Para o plano gráfico, abra o SSMS ou o Azure Data Studio na base `gestao_pedidos_volume` e rode as queries com "Include Actual Execution Plan".
 
+Atenção ao copiar a pasta: se `/tmp/database` já existir no container, `docker compose cp database db:/tmp/database` cria `/tmp/database/database` e os scripts antigos continuam sendo executados. Em uma nova rodada, copie para um caminho novo.
+
 Cuidado: os scripts 05 e 06 desabilitam e reconstroem os dois índices de apoio de `pedido` **só na base de volume**. Se interromper no meio, rode `ALTER INDEX ... REBUILD` neles.
 
 ## 7. Como ler os resultados
@@ -146,8 +154,8 @@ Cuidado: os scripts 05 e 06 desabilitam e reconstroem os dois índices de apoio 
 
 ## 8. Decisão sobre os índices
 
-Os índices de `pedido` são hipóteses de projeto (plano, seção 2.7). Depois de preenchidas as evidências:
+Os índices de `pedido` nasceram como hipóteses de projeto (plano, seção 2.7). Com as evidências:
 
-- se o cenário E não for melhor que B, o índice não se paga e deve ser reavaliado;
-- se algum índice não for usado por nenhuma consulta do sistema, removê-lo reduz o custo de cada `INSERT` de pedido;
+- **`ix_pedido_data_criacao_id`: mantido.** O cenário E é melhor que o B (906 contra 1986 leituras em `pedido`; CPU 32 contra 54 ms) e o plano usa `Index Seek`.
+- **`ix_pedido_cliente_id_data_criacao_id`: mantido.** O ranking não o usa, mas a listagem filtrada por cliente depende dele (H7: de 1806 para 3 leituras na contagem). O custo dele em cada `INSERT` não foi medido.
 - qualquer mudança entra em `database/01-schema.sql` em commit à parte, citando esta investigação.

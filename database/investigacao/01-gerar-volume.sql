@@ -34,7 +34,8 @@ SET IDENTITY_INSERT dbo.pedido ON;
 INSERT INTO dbo.pedido (id, cliente_id, data_criacao, valor_total)
 SELECT n,
        ((n * 7) % 4500) + 1,
-       DATEADD(SECOND, CAST((CAST(CHECKSUM(n) AS bigint) & 2147483647) % 63072000 AS int), CAST('2025-01-01' AS datetime2(0))),
+       -- Hash multiplicativo (determinístico): CHECKSUM de inteiros sequenciais concentra os valores no começo do intervalo.
+       DATEADD(SECOND, CAST((CAST(n AS bigint) * 2654435761) % 63072000 AS int), CAST('2025-01-01' AS datetime2(0))),
        0
 FROM #n ORDER BY n;
 SET IDENTITY_INSERT dbo.pedido OFF;

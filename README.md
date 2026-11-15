@@ -118,6 +118,7 @@ dotnet test Pedidos.slnx --filter "CA=CA-14"
 
 | O que | Como |
 |---|---|
+| Rastrear um critério até o teste (Claude Code) | skill `verificar-ca` em `.claude/skills/verificar-ca/` |
 | Direção das dependências entre projetos | `powershell -File scripts/verificar-referencias.ps1` |
 | Execução completa pelo Compose (CA-33) e idempotência do `db-init` (CA-34) | `powershell -File scripts/verificar-compose.ps1` (**apaga o volume do banco**) |
 | Frontend (CA-38 a CA-40) | Roteiro manual abaixo (a spec não pede testes automatizados do frontend) |
@@ -202,7 +203,15 @@ O enunciado traz uma query de ranking "lenta e incorreta". O relato completo, co
 - **Desempenho:** `YEAR(coluna)` impede o uso de índice por data; o `GROUP BY` roda depois de multiplicar os pedidos pelos itens; faltava índice de apoio.
 - **Correção:** faixa de datas no lugar de `YEAR()`, agregação por `cliente_id` antes da junção, ordenação `DESC` com desempate por id e `TOP (5)`, igual ao endpoint `GET /api/relatorios/top-clientes`.
 
-Como investigar: gerar uma base de volume separada (`gestao_pedidos_volume`, ~500 mil pedidos), medir leituras lógicas e plano real da original e da corrigida, com e sem os índices de apoio, e provar a equivalência dos totais contra uma soma independente dos itens. **As medições ainda não foram executadas**: a tabela de evidências em `docs/investigacao-query.md` será preenchida com a saída bruta guardada em `database/investigacao/resultados/`.
+Medido em uma base de volume separada (`gestao_pedidos_volume`: 500 mil pedidos, 1,5 milhão de itens), com cache aquecido e mediana de 3 execuções (saída bruta em `database/investigacao/resultados/`):
+
+| Cenário | Leituras lógicas (`pedido` / `item_pedido`) | CPU | Tempo total |
+|---|---|---|---|
+| Original, sem índices de apoio | 2084 / 6418 | 352 ms | 117 ms |
+| Corrigida, sem índices de apoio | 1986 / 0 | 54 ms | 57 ms |
+| Corrigida, com índices de apoio | 906 / 0 | 32 ms | 32 ms |
+
+A corrigida com índices lê 89% menos páginas no total que a original sem eles (920 contra 8578), e o plano passa de varredura a `Index Seek` em `ix_pedido_data_criacao_id`. A comparação de resultados confirmou que `valor_total` bate com a soma dos itens (0 divergências), que a original devolve 4000 linhas para 4500 clientes com pedido (500 nomes fundidos) e que ela lista os menores primeiro. Os limites da medição (uma máquina, dados sintéticos, planos paralelos na original) estão em [docs/investigacao-query.md](docs/investigacao-query.md).
 
 ## Configuração AI First
 
@@ -282,5 +291,6 @@ Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem
 - **Credencial de desenvolvimento** (senha do `sa`) está versionada de propósito, para o `docker compose up` funcionar sem passos extras. Serve só para ambiente local; em produção as senhas ficam em `.env.producao`, fora do Git.
 - **Evolução do schema:** os scripts de `database/` só criam o que não existe; falta um mecanismo de versionamento para alterar o schema depois (ver [docs/producao.md](docs/producao.md)).
 - **Sem autenticação**, edição ou cancelamento de pedidos (fora do escopo, spec 1.4).
-- **Índices de `pedido`** (`ix_pedido_data_criacao_id` e `ix_pedido_cliente_id_data_criacao_id`) são hipóteses de projeto justificadas pelas consultas, **ainda sem medição** com volume.
-- **Investigação da query do enunciado** (etapa E21 do plano) está pendente: o texto da query não foi fornecido, então não há análise nem `docs/investigacao-query.md`. O plano descreve o método.
+- **Índices de `pedido`:** `ix_pedido_data_criacao_id` teve o benefício medido no ranking (906 contra 1986 leituras em `pedido`) e `ix_pedido_cliente_id_data_criacao_id` na listagem por cliente (contagem de 1806 para 3 leituras). O custo deles em cada `INSERT` de pedido **não foi medido**.
+- **Investigação da query do enunciado** (etapa E21): concluída para o ranking, em [docs/investigacao-query.md](docs/investigacao-query.md). A medição é de uma máquina, com dados sintéticos e cache aquecido; vale como ordem de grandeza, não como garantia de desempenho em produção.
+- **Itens do plano por fazer:** o MCP somente leitura para o SQL Server (E20) será implementado; os testes automatizados do frontend (E22, opcional) ficam fora por ora (decisão PD-13).
