@@ -7,11 +7,12 @@ using Pedidos.Domain.Entidades;
 using Pedidos.Infrastructure.Persistencia.Contexto;
 using Pedidos.Infrastructure.Persistencia.Repositorios;
 using Pedidos.IntegrationTests.Suporte;
+using Xunit.Abstractions;
 
 namespace Pedidos.IntegrationTests.Api;
 
 /// <summary>Requisições HTTP simultâneas e reais contra o SQL Server: estoque nunca negativo e sem 5xx (RN-08).</summary>
-public class ConcorrenciaApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTeste>, IDisposable
+public class ConcorrenciaApiTests(BancoDeTeste banco, ITestOutputHelper saida) : IClassFixture<BancoDeTeste>, IDisposable
 {
     private const int Rodadas = 20;
 
@@ -71,11 +72,18 @@ public class ConcorrenciaApiTests(BancoDeTeste banco) : IClassFixture<BancoDeTes
 
         var status = await DispararAsync(_fabrica, Enumerable.Range(0, 20).Select(_ => Pedido(cliente, (produto, 1))));
 
+        var estoqueFinal = await banco.EstoqueAsync(produto);
+        var somaVendida = await SomaVendidaAsync(produto);
+
+        saida.WriteLine($"Requisições: {status.Count} | 201: {status.Count(s => s == HttpStatusCode.Created)} | " +
+                        $"409: {status.Count(s => s == HttpStatusCode.Conflict)} | 5xx: {status.Count(s => (int)s >= 500)} | " +
+                        $"estoque final: {estoqueFinal} | vendido: {somaVendida}");
+
         Assert.Equal(10, status.Count(s => s == HttpStatusCode.Created));
         Assert.Equal(10, status.Count(s => s == HttpStatusCode.Conflict));
         Assert.DoesNotContain(status, s => (int)s >= 500);
-        Assert.Equal(0, await banco.EstoqueAsync(produto));
-        Assert.Equal(10, await SomaVendidaAsync(produto));
+        Assert.Equal(0, estoqueFinal);
+        Assert.Equal(10, somaVendida);
     }
 
     [Trait("CA", "CA-15")]
