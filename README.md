@@ -293,4 +293,4 @@ Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem
 - **Sem autenticação**, edição ou cancelamento de pedidos (fora do escopo, spec 1.4).
 - **Índices de `pedido`:** `ix_pedido_data_criacao_id` teve o benefício medido no ranking (906 contra 1986 leituras em `pedido`) e `ix_pedido_cliente_id_data_criacao_id` na listagem por cliente (contagem de 1806 para 3 leituras). O custo deles em cada `INSERT` de pedido **não foi medido**.
 - **Investigação da query do enunciado** (etapa E21): concluída para o ranking, em [docs/investigacao-query.md](docs/investigacao-query.md). A medição é de uma máquina, com dados sintéticos e cache aquecido; vale como ordem de grandeza, não como garantia de desempenho em produção.
-- **Itens do plano por fazer:** o MCP somente leitura para o SQL Server (E20) será implementado; os testes automatizados do frontend (E22, opcional) ficam fora por ora (decisão PD-13).
+- **Itens do plano em aberto:** a validação ponta a ponta do MCP do SQL Server (E20), descrita na seção do MCP; os testes automatizados do frontend (E22, opcional) ficam fora por ora (decisão PD-13).

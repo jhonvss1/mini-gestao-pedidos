@@ -3,7 +3,7 @@
 > Complementa `docs/spec.md`, que define o **quê**. Este documento define o **como**: arquitetura, mecanismos (inclusive transação e concorrência), testes, Docker, configuração do Claude Code e sequência de implementação.
 > Referências RN-xx e CA-xx apontam para a spec; PD-n, para a seção 9. Itens marcados como hipótese não foram medidos.
 >
-> **Estado da execução:** E0 a E19 concluídas; a tela do ranking (D-22), o endpoint de saúde (D-21), a camada de produção e o CI/CD foram entregues depois do plano original (seção 8, "Entregas posteriores"). E20 (MCP) ainda será implementada (decisão do autor na revisão do PD-11); E21 (investigação) foi concluída para o ranking, com medições em `database/investigacao/resultados/`. Onde o texto abaixo descreve a intenção original e a implementação divergiu, a divergência vem marcada como **[atualizado]**.
+> **Estado da execução:** E0 a E20 concluídas (a E20 com a validação ponta a ponta do MCP ainda pendente); a tela do ranking (D-22), o endpoint de saúde (D-21), a camada de produção e o CI/CD foram entregues depois do plano original (seção 8, "Entregas posteriores"). E20 (MCP) foi implementada depois da revisão do PD-11, mas a chamada ponta a ponta (`describe_entities` e leitura de `pedido`) ainda não foi registrada; E21 (investigação) foi concluída para o ranking, com medições em `database/investigacao/resultados/`. Onde o texto abaixo descreve a intenção original e a implementação divergiu, a divergência vem marcada como **[atualizado]**.
 
 ## 0. Problemas e contradições identificados
 
@@ -34,7 +34,7 @@ mini-gestao-pedidos/
 ├── .editorconfig  .gitignore  .dockerignore  .env.example  docker-compose.yml
 ├── CLAUDE.md  README.md
 ├── .claude/        settings.json, hooks/, skills/verificar-ca/  (6)
-├── .mcp.json                                              (6.4, **ainda não criado**: E20 por fazer)
+├── .mcp.json                                              (6.4, criado na E20)
 ├── .github/workflows/  ci.yml, deploy.yml                 (8, entregas posteriores)
 ├── docs/           spec.md, plan.md, investigacao-query.md (7), producao.md
 ├── database/
@@ -318,7 +318,7 @@ frontend/src/app/
 
 ### 6.4 MCP para SQL Server
 
-**Estado: nada foi instalado, configurado ou conectado (E20 será implementada; ainda não existe `.mcp.json`).** O que segue vem de **leitura da documentação** (2026-11-12) e será confirmado por execução em etapa própria (E20).
+**Estado [atualizado]: implementado na E20** (`.mcp.json`, `tools/sql-mcp/dab-config.json`, login `mcp_reader`, DAB 2.1.7). A configuração foi lida sem erro (`dab validate`), mas a **chamada ponta a ponta ainda não foi executada nem registrada** (ver README). O que segue vem de **leitura da documentação** (2026-11-12) e será confirmado por execução em etapa própria (E20).
 
 - **Implementação identificada:** **SQL MCP Server**, parte do **Data API builder (DAB)** da Microsoft, ferramenta .NET de código aberto. Documentação: [visão geral](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/overview), [início rápido](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/quickstart-visual-studio-code), [ferramentas DML](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/data-manipulation-language-tools), [transporte stdio](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/stdio-transport), [autenticação](https://learn.microsoft.com/en-us/azure/data-api-builder/mcp/how-to-configure-authentication).
 - **Versão:** disponível a partir do DAB 1.7; a documentação recomenda a 2.0. Status de preview/GA e suporte: **não encontrado na documentação lida**.
@@ -389,7 +389,7 @@ Requisitos obrigatórios primeiro (E0–E18); diferenciais depois (E19–E22). C
 | E18 | `README.md` (execução, testes, Compose, roteiros, risco residual, `DataPedido`↔`DataCriacao`) | seguir o README do zero | `docs: adiciona README` |
 | — | **Fim dos obrigatórios** | todos os CA obrigatórios cobertos | — |
 | E19 | Skill `verificar-ca` + traits nos testes existentes — **feita** (skill em `.claude/skills/verificar-ca/`; CA-03b ganhou teste próprio) | rodar a skill e conferir a matriz | `chore: adiciona skill de verificação de critérios de aceite` |
-| E20 | **Por fazer (será implementada).** MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
+| E20 | **Feita; validação ponta a ponta pendente.** MCP SQL (DAB): instalação, `dab-config.json`, login `mcp_reader`, `.mcp.json`; **validar a conexão com evidência** (`describe_entities`, leitura de `pedido`) | saída anexada; escrita comprovadamente indisponível | `chore: adiciona MCP somente leitura para o SQL Server` |
 | E21 | **Feita para o ranking.** Investigação da query: volume, comparação, planos e medições concluídos; a listagem por cliente também foi medida (`07-medir-listagem.sql`); **falta** só medir o custo dos índices no `INSERT` | evidências em `database/investigacao/resultados/` | `docs: registra investigação da query do enunciado` |
 | E22 | (Opcional) testes de frontend e revisão final do plano — **não feita**; PD-13 mantém o roteiro manual | — | `test(frontend): ...` / `docs: atualiza plano` |
 
@@ -444,7 +444,7 @@ Itens que não estavam em E0–E22 e foram entregues depois, cada um registrado 
 | PD-8 | **Aprovado:** senha de desenvolvimento versionada | Só para ambiente local |
 | PD-9 | **Aprovado:** healthcheck pelo endpoint `/api/saude` | Facilita o controle |
 | PD-10 | **Aprovado:** Testcontainers | — |
-| PD-11 | **Aprovado:** MCP pelo Data API builder | Será implementado (E20) |
+| PD-11 | **Aprovado:** MCP pelo Data API builder | Implementado na E20; falta registrar a chamada ponta a ponta |
 | PD-12 | **Aprovado:** hook de formatação | — |
 | PD-13 | **Aprovado:** frontend sem testes automatizados | Não é prioridade agora |
 | PD-14 | **Aprovado:** manter os dois índices | Documentação atualizada com as medições |
