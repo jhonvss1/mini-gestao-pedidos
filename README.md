@@ -4,6 +4,7 @@ Cadastro de clientes e produtos com **criação de pedidos validada** (cliente, 
 
 - O **quê** (regras RN-xx, critérios de aceite CA-xx, decisões D-xx): [docs/spec.md](docs/spec.md)
 - O **como** (arquitetura, concorrência, etapas E0 a E22): [docs/plan.md](docs/plan.md)
+- **Aplicação publicada:** https://gestao-pedidos.braggo.com.br/pedidos (detalhes de produção, CI e deploy na seção [Produção](#produção))
 
 ## Stack
 
@@ -115,6 +116,8 @@ Cada teste de critério de aceite leva `[Trait("CA", "CA-xx")]`, o que permite r
 ```bash
 dotnet test Pedidos.slnx --filter "CA=CA-14"
 ```
+
+Última execução completa (2026-11-15): **223 testes, 0 falhas, 0 ignorados**, em 31,9 s; build em 37,5 s.
 
 | O que | Como |
 |---|---|
