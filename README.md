@@ -265,6 +265,8 @@ Defina `SENHA_MCP` com a mesma senha no ambiente em que o Claude Code é iniciad
 
 **Estado da validação:** o `dab-config.json` passa no `dab validate` e o servidor `sql-pedidos` foi validado no projeto pelo autor em 2026-11-15, funcionando com o Claude Code conectado ao banco local em modo somente leitura.
 
+**Como usei durante o desenvolvimento:** consultei, pelo MCP, os dados que as minhas controllers precisam devolver (pedidos, itens, clientes e produtos), para confirmar no banco os valores que a API retornava. O Claude fazia a leitura das tabelas pelo `sql-pedidos` e eu comparava com a resposta do endpoint. Como o servidor é somente leitura e não faz `join`, as comparações em massa ficaram nos scripts de `database/investigacao/`.
+
 ### Como isso ajudou no desenvolvimento
 - O **hook de build** testado de propósito com um arquivo quebrado devolveu `CS1026` e `CS1002` ao Claude com código 2, sem precisar rodar o build à mão.
 - O **hook de coautoria** já mostrou valor (e um defeito): ele bloqueou um comando que apenas *citava* o termo na documentação. A regra inicial era ampla demais; foi corrigida para bloquear só o trailer de verdade (nome e e-mail entre `<>`) e testada com falsos positivos.
