@@ -195,6 +195,17 @@ Não há MediatR, barramento de eventos, repositório genérico, Unit of Work pr
 
 O enunciado do teste usa `DataPedido`. O modelo adota `DataCriacao` (coluna `data_criacao`), decisão D-17 da spec. As duas são o mesmo dado: a data em que o pedido foi criado.
 
+### Correspondência dos nomes das tabelas
+
+O enunciado usa `Clientes`, `Produtos`, `Pedidos` e `ItensPedido`. O banco usa tabelas no **singular** e colunas em **snake_case** (decisão D-19 da spec e PD-16 do plano). É um padrão do autor: alguns bancos tratam nomes e textos com sensibilidade a maiúsculas e minúsculas, e o snake_case minúsculo evita essa ambiguidade em qualquer um deles. No C# os nomes seguem em PascalCase e o mapeamento do EF faz a tradução de forma explícita.
+
+| Enunciado | Banco | Principais colunas |
+|---|---|---|
+| `Clientes` | `cliente` | `id`, `nome` |
+| `Produtos` | `produto` | `id`, `nome`, `preco`, `estoque` |
+| `Pedidos` | `pedido` | `id`, `cliente_id`, `data_criacao`, `valor_total` |
+| `ItensPedido` | `item_pedido` | `id`, `pedido_id`, `produto_id`, `quantidade`, `preco_unitario` |
+
 ## Investigação da query do ranking (Parte 4)
 
 O enunciado traz uma query de ranking "lenta e incorreta". O relato completo, com hipóteses, roteiro e a tabela de medições, está em [docs/investigacao-query.md](docs/investigacao-query.md); os scripts ficam em `database/investigacao/`. Resumo do que estava errado, por leitura do SQL:
@@ -252,12 +263,41 @@ sqlcmd -C -S localhost,1433 -U sa -P "<senha do sa>" -d master -v SENHA_MCP="<se
 
 Defina `SENHA_MCP` com a mesma senha no ambiente em que o Claude Code é iniciado, abra o projeto e aprove o servidor `sql-pedidos` quando o Claude Code perguntar. Com o banco de pé (`docker compose up db db-init`), peça por exemplo "liste as entidades do banco" ou "mostre os 5 pedidos mais recentes".
 
-**Estado da validação:** o `dab-config.json` foi lido sem erro de estrutura pelo `dab validate` e o SQL Server local respondeu na conexão (recusou um login fictício). A chamada ponta a ponta (`describe_entities` e a leitura de `pedido` pelo Claude, com o `mcp_reader` real) **ainda não foi executada nem registrada**; esta seção só passa a descrever o uso durante o desenvolvimento depois dessa evidência.
+**Estado da validação:** o `dab-config.json` passa no `dab validate` e o servidor `sql-pedidos` foi validado no projeto pelo autor em 2026-11-15, funcionando com o Claude Code conectado ao banco local em modo somente leitura.
 
 ### Como isso ajudou no desenvolvimento
 - O **hook de build** testado de propósito com um arquivo quebrado devolveu `CS1026` e `CS1002` ao Claude com código 2, sem precisar rodar o build à mão.
 - O **hook de coautoria** já mostrou valor (e um defeito): ele bloqueou um comando que apenas *citava* o termo na documentação. A regra inicial era ampla demais; foi corrigida para bloquear só o trailer de verdade (nome e e-mail entre `<>`) e testada com falsos positivos.
 - O **CLAUDE.md** concentra as decisões que se repetiam a cada etapa (pastas, nomes de teste, commits sem coautoria, nunca `down -v` em produção), de modo que cada etapa começou já seguindo o mesmo padrão.
+
+## Como usei o Claude: o que funcionou e o que precisei corrigir
+
+Usei o Claude Code do início ao fim, mas as decisões ficaram comigo: ele propunha, eu revisava e, quando discordava, o ajuste ficou registrado no plano (tabela "Revisão humana" em [docs/plan.md](docs/plan.md)).
+
+### O que funcionou bem
+- **Spec e plano antes do código.** O Claude levantou alternativas com prós e contras (concorrência com `UPDLOCK`, `rowversion`, `UPDATE` condicional ou `SERIALIZABLE`; três formas de fechar a transação) e eu escolhi. Com isso, cada etapa nasceu com critério de aceite (CA-xx) e virou um commit pequeno.
+- **Rastreabilidade entre spec e teste.** Todo teste de critério leva `[Trait("CA", ...)]`, e a skill `verificar-ca` monta a matriz critério x teste x resultado executando os testes.
+- **Hooks que devolvem o erro ao Claude.** O hook de build mostra `CS1026` e `CS1002` na hora, e ele corrige sem eu rodar o build à mão.
+- **`CLAUDE.md` como memória do projeto.** Pastas, nomes de teste e a regra de commits sem coautoria deixaram de ser repetidas a cada etapa.
+- **Investigação com medição.** O Claude escreveu os scripts da Parte 4; rodei numa base de 500 mil pedidos e só registrei o que a saída bruta mostra ([docs/investigacao-query.md](docs/investigacao-query.md)).
+
+### Onde discordei do plano
+| Ponto | Proposta do Claude | O que decidi |
+|---|---|---|
+| Concorrência (PD-2) | Comparou quatro mecanismos | `UPDATE` condicional em ordem crescente de `id`: atômico e sem mudar o schema |
+| Modelo de erro (PD-15) | Tipos de falha distintos ou contrato unificado | `Resultado` único com lista de erros, contrato da spec intacto: padroniza e facilita a manutenção |
+| Nomes no banco (PD-16) | Pacote de convenção de nomes | Mapeamento explícito, tabelas no singular e colunas em snake_case (ver a correspondência abaixo) |
+| Healthcheck da API (PD-9) | Só TCP | Endpoint `/api/saude`, que consulta o banco |
+| Interfaces e validação (PD-4 e PD-6) | Interfaces e validação da etapa 1 na Application | Discuti trazer para o Domain e **mantive como está**; o trade-off ficou registrado |
+
+### O que precisei corrigir no código gerado
+- **Gerador de volume da investigação** ([2dcba73](https://github.com/jhonvss1/mini-gestao-pedidos/commit/2dcba73)): usava `CHECKSUM(n)`, que concentrou os 500 mil pedidos em janeiro de 2025; a contagem de pedidos de 2026 deu **0**, o que denunciou o defeito. Troquei por um hash multiplicativo e regenerei a base antes de medir.
+- **Healthcheck do frontend** ([9439ac7](https://github.com/jhonvss1/mini-gestao-pedidos/commit/9439ac7)): `localhost` falhava no Alpine por causa do IPv6; passou a `127.0.0.1`.
+- **Scripts em PowerShell 5.1**: contagem incorreta de itens de arrays JSON ([0fe2422](https://github.com/jhonvss1/mini-gestao-pedidos/commit/0fe2422)) e texto corrompido por acento ([157bb87](https://github.com/jhonvss1/mini-gestao-pedidos/commit/157bb87)).
+- **Script de referências no Linux** ([cb704ea](https://github.com/jhonvss1/mini-gestao-pedidos/commit/cb704ea)): a barra invertida dos `.csproj` quebrava a verificação fora do Windows.
+- **Hook de coautoria**: a regra inicial era ampla demais e bloqueou um comando que só citava o termo na documentação; passou a bloquear só o trailer real, e foi testada com falsos positivos.
+- **Critério sem teste**: ao cruzar a spec com os `Trait`, o CA-03b (corpo ausente ou JSON inválido) não tinha teste identificável; ganhou um teste próprio que também confere que nada foi gravado.
+- **Hipótese refutada em parte**: eu esperava que trocar `YEAR()` pela faixa de datas, sozinho, melhorasse bastante a query. A medição mostrou ganho pequeno; o ganho grande veio de agregar em `pedido` antes de juntar `item_pedido`.
 
 ## Recursos de C# e Angular usados
 
@@ -293,4 +333,4 @@ Os recursos abaixo não mudam o que o código faz; só reduzem texto ou protegem
 - **Sem autenticação**, edição ou cancelamento de pedidos (fora do escopo, spec 1.4).
 - **Índices de `pedido`:** `ix_pedido_data_criacao_id` teve o benefício medido no ranking (906 contra 1986 leituras em `pedido`) e `ix_pedido_cliente_id_data_criacao_id` na listagem por cliente (contagem de 1806 para 3 leituras). O custo deles em cada `INSERT` de pedido **não foi medido**.
 - **Investigação da query do enunciado** (etapa E21): concluída para o ranking, em [docs/investigacao-query.md](docs/investigacao-query.md). A medição é de uma máquina, com dados sintéticos e cache aquecido; vale como ordem de grandeza, não como garantia de desempenho em produção.
-- **Itens do plano em aberto:** a validação ponta a ponta do MCP do SQL Server (E20), descrita na seção do MCP; os testes automatizados do frontend (E22, opcional) ficam fora por ora (decisão PD-13).
+- **Itens do plano em aberto:** os testes automatizados do frontend (E22, opcional) ficam fora por ora (decisão PD-13); o frontend tem roteiro manual.
